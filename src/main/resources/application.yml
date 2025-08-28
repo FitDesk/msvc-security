@@ -2,6 +2,8 @@ spring:
   application:
     name: msvc-security
 
+server:
+  port: ${MSVC_SECURITY_PORT:9091}
 
 springdoc:
   api-docs:
