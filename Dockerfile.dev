@@ -1,10 +1,70 @@
+# FROM openjdk:21-jdk-slim
+# WORKDIR /app
+# COPY pom.xml .
+# COPY mvnw .
+# COPY .mvn .mvn
+# RUN chmod +x mvnw
+# RUN ./mvnw dependency:go-offline
+# COPY src ./src
+# EXPOSE 9091
+# CMD ["./mvnw", "spring-boot:run"]
+
+# FROM openjdk:21-jdk-slim
+
+# # Instalar Maven
+# RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
+
+# WORKDIR /app
+
+# # ✅ Instalar security-common primero
+# COPY security-common /app/security-common
+# WORKDIR /app/security-common
+# RUN mvn clean install -DskipTests
+
+# # ✅ Construir msvc-security
+# WORKDIR /app/msvc-security
+# COPY msvc-security/pom.xml .
+# COPY msvc-security/mvnw .
+# COPY msvc-security/.mvn .mvn
+# RUN chmod +x mvnw
+
+# COPY msvc-security/src ./src
+
+# EXPOSE 9091
+# CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.fork=false"]
+
+
+
 FROM openjdk:21-jdk-slim
+
+RUN apt-get update && \
+    apt-get install -y maven && \
+    rm -rf /var/lib/apt/lists/* && \
+    mvn --version
+
 WORKDIR /app
-COPY pom.xml .
-COPY mvnw .
-COPY .mvn .mvn
+
+COPY security-common/pom.xml /app/security-common/pom.xml
+COPY msvc-security/pom.xml /app/msvc-security/pom.xml
+
+WORKDIR /app/security-common
+RUN mvn dependency:resolve || true
+
+COPY security-common /app/security-common
+RUN mvn clean install -DskipTests -q
+
+WORKDIR /app/msvc-security
+COPY msvc-security/mvnw .
+COPY msvc-security/.mvn .mvn
 RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline
-COPY src ./src
+
+RUN ./mvnw dependency:go-offline -q || true
+
+COPY msvc-security/src ./src
+
 EXPOSE 9091
-CMD ["./mvnw", "spring-boot:run"]
+ENV SPRING_PROFILES_ACTIVE=dev
+
+CMD ["./mvnw", "spring-boot:run", \
+     "-Dspring-boot.run.fork=false", \
+     "-Dspring-boot.run.jvmArguments=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005"]
