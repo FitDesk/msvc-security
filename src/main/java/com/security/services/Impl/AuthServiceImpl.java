@@ -5,10 +5,10 @@ import com.security.DTOs.LoginResponseDTO;
 import com.security.Entity.UserEntity;
 import com.security.Mappers.UserMapper;
 import com.security.Repository.UserRepository;
+import com.security.config.AuthProperties;
 import com.security.services.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.security.services.TokenService;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
@@ -27,10 +27,11 @@ import java.util.stream.Collectors;
 @Transactional
 public class AuthServiceImpl implements AuthService {
 
+    private final AuthProperties authProperties;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
-    private final TokenService tokenService;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
 
@@ -140,72 +141,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-//    @Override
-//    public boolean validateToken(String token) {
-//        return tokenService.isTokenValid(token);
-//    }
-
-//    private UserEntity findUserByEmail(String email) {
-//        return userRepository.findByEmail(email)
-//                .orElseThrow(() -> {
-//                    log.warn("User not found with email: {}", email);
-//                    return new UsernameNotFoundException("Usuario no encontrado con el email: " + email);
-//                });
-//    }
-
-//    private void validatePassword(String rawPassword, String encodedPassword) {
-//        log.debug("Validating password - Raw length: {}, Encoded length: {}",
-//                rawPassword != null ? rawPassword.length() : 0,
-//                encodedPassword != null ? encodedPassword.length() : 0);
-//
-//        if (encodedPassword == null || encodedPassword.trim().isEmpty()) {
-//            log.error("Encoded password is null or empty");
-//            throw new BadCredentialsException("Contraseña incorrecta");
-//        }
-//
-//        if (rawPassword == null || rawPassword.trim().isEmpty()) {
-//            log.error("Raw password is null or empty");
-//            throw new BadCredentialsException("Contraseña incorrecta");
-//        }
-//
-//        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
-//            log.warn("Password validation failed");
-//            throw new BadCredentialsException("Contraseña incorrecta");
-//        }
-//
-//        log.debug("Password validation successful");
-//    }
-
-
-//    private void validateUserStatus(UserEntity user) {
-//        if (!user.getEnabled()) {
-//            log.warn("User account is disabled: {}", user.getEmail());
-//            throw new DisabledException("La cuenta de usuario está deshabilitada");
-//        }
-//
-//        if (!user.isAccountNonLocked()) {
-//            log.warn("User account is locked: {}", user.getEmail());
-//            throw new DisabledException("La cuenta de usuario está bloqueada");
-//        }
-//
-//        if (!user.isAccountNonExpired()) {
-//            log.warn("User account is expired: {}", user.getEmail());
-//            throw new DisabledException("La cuenta de usuario ha expirado");
-//        }
-//    }
-
-//    private String maskToken(String token) {
-//        if (token == null || token.length() < 10) {
-//            return "***";
-//        }
-//        return token.substring(0, 10) + "...";
-//    }
-
     private String generateRefreshToken(UserEntity user) {
         Instant now = Instant.now();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("http://localhost:9091")
+                .issuer(authProperties.getServer().getIssuer())
                 .issuedAt(now)
                 .expiresAt(now.plus(7, ChronoUnit.DAYS))
                 .subject(user.getEmail())
@@ -228,7 +168,7 @@ public class AuthServiceImpl implements AuthService {
                 .collect(Collectors.joining(" "));
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("http://localhost:9091")
+                .issuer(authProperties.getServer().getIssuer())
                 .issuedAt(now)
                 .expiresAt(now.plus(15, ChronoUnit.MINUTES))
                 .subject(user.getEmail())
@@ -243,6 +183,5 @@ public class AuthServiceImpl implements AuthService {
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
-
 
 }

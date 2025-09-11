@@ -10,9 +10,6 @@ public interface AuthService {
 
     void logout(String token);
 
-//    boolean validateToken(String token);
-
-
     LoginResponseDTO refreshToken(String refreshToken);
 
 }

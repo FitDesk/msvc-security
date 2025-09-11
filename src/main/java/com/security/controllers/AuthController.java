@@ -1,8 +1,9 @@
 package com.security.controllers;
 
-import com.fitdesk.security.annotations.*;
+
 import com.security.DTOs.LoginRequestDTO;
 import com.security.DTOs.LoginResponseDTO;
+import com.security.annotations.AuthenticatedAccess;
 import com.security.services.AuthService;
 import com.security.services.CookieService;
 import com.security.services.LoginResponseService;
