@@ -18,20 +18,26 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 
-# ✅ Primero instalar security-common desde JitPack
+# ✅ Copiar security-common localmente (igual que dev)
+COPY ../security-common ./security-common
+WORKDIR /workspace/security-common
+RUN mvn clean install -DskipTests -q
+
+# ✅ Construir msvc-security
+WORKDIR /workspace/msvc-security
 COPY pom.xml ./
 COPY mvnw ./
 COPY .mvn ./.mvn
 RUN chmod +x mvnw
 
-# ✅ Descargar dependencias (incluyendo security-common de JitPack)
+# ✅ Resolver dependencias
 RUN ./mvnw dependency:resolve -q
 
 # ✅ Copiar código fuente y construir
 COPY src ./src
 RUN ./mvnw clean package -DskipTests -q
 
-# ✅ Imagen final optimizada
+# ✅ Imagen final optimizada para producción
 FROM eclipse-temurin:21-jre-alpine
 VOLUME /tmp
 
@@ -40,7 +46,7 @@ RUN apk add --no-cache curl wget
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
 
-COPY --from=build /workspace/target/*.jar app.jar
+COPY --from=build /workspace/msvc-security/target/*.jar app.jar
 RUN chown appuser:appgroup app.jar
 
 USER appuser
