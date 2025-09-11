@@ -13,29 +13,34 @@
 # CMD ["java", "-jar", "app.jar"]
 
 
+# syntax=docker/dockerfile:1
+
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 
-COPY security-common ./security-common
-WORKDIR /workspace/security-common
-RUN mvn clean install -DskipTests -q
+# ✅ Primero instalar security-common desde JitPack
+COPY pom.xml ./
+COPY mvnw ./
+COPY .mvn ./.mvn
+RUN chmod +x mvnw
 
-WORKDIR /workspace/msvc-security
-COPY msvc-security .
-RUN mvn clean package -DskipTests -q
+# ✅ Descargar dependencias (incluyendo security-common de JitPack)
+RUN ./mvnw dependency:resolve -q
 
+# ✅ Copiar código fuente y construir
+COPY src ./src
+RUN ./mvnw clean package -DskipTests -q
 
+# ✅ Imagen final optimizada
 FROM eclipse-temurin:21-jre-alpine
 VOLUME /tmp
 
 RUN apk add --no-cache curl wget
 
-
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
 
-COPY --from=build /workspace/msvc-security/target/*.jar app.jar
-
+COPY --from=build /workspace/target/*.jar app.jar
 RUN chown appuser:appgroup app.jar
 
 USER appuser
