@@ -22,7 +22,14 @@ public class LoggerAspect {
         try {
             logger.info("El metodo {} con parametros {}", method, args);
             result = joinPoint.proceed();
-            logger.info("El metodo : {}() retorna el resultado: {}", method, result);
+
+            // Evitar logging detallado para métodos de autenticación
+            if (method.contains("authenticate") || method.contains("login")) {
+                logger.info("El metodo : {}() retorna respuesta de autenticación", method);
+            } else {
+                logger.info("El metodo : {}() retorna el resultado: {}", method, result);
+            }
+
             return result;
         } catch (
                 Throwable e) {
@@ -30,4 +37,5 @@ public class LoggerAspect {
             throw e;
         }
     }
+
 }
