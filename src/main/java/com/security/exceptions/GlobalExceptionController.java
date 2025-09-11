@@ -27,24 +27,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionController {
 
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-//        List<String> details = ex.getBindingResult()
-//                .getFieldErrors()
-//                .stream()
-//                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-//                .collect(Collectors.toList());
-//
-//        ErrorResponse errorResponse = new ErrorResponse(
-//                "VALIDATION_ERROR",
-//                "Errores de validación en los campos enviados",
-//                details
-//        );
-//
-//        log.warn("Validation error: {}", details);
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-//    }
-
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         ErrorResponse errorResponse = new ErrorResponse(

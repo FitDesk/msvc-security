@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -40,6 +41,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 import com.fitdesk.security.annotations.*;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -67,7 +69,7 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, CookieAuthenticationFilter cookieAuthenticationFilter) throws Exception {
         return http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
@@ -76,12 +78,14 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/auth/info",
                                 "/auth/status",
-                                "/saludo",
                                 "/auth/login",
+                                "/auth/refresh",
+                                "/saludo",
                                 "/"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2ResourceServer(oauth2ResourceServer ->
                         oauth2ResourceServer.jwt(Customizer.withDefaults())
                 )
@@ -113,10 +117,10 @@ public class SecurityConfig {
                         .build())
 
                 .tokenSettings(TokenSettings.builder()
-                        .accessTokenTimeToLive(Duration.ofHours(1))
+                        .accessTokenTimeToLive(Duration.ofMinutes(15))
                         .refreshTokenTimeToLive(Duration.ofDays(7))
                         .reuseRefreshTokens(false)
-                        .accessTokenFormat(org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat.SELF_CONTAINED)
+                        .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
                         .build())
                 .build();
 

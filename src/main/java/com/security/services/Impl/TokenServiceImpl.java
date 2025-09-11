@@ -75,7 +75,6 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public void invalidateToken(String token) {
-        // En un sistema real, aquí mantendrías una blacklist de tokens
         log.info("Token invalidated: {}", maskToken(token));
     }
 
