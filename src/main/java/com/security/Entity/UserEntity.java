@@ -1,6 +1,7 @@
 package com.security.Entity;
 
 import com.security.config.Audit;
+import com.security.config.AuditListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@EntityListeners(AuditListener.class)
 @Entity
 @Table(name = "users")
 @Data
