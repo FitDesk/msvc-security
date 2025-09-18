@@ -14,6 +14,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -31,6 +33,8 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.security.KeyPair;
@@ -38,6 +42,9 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -91,6 +98,45 @@ public class SecurityConfig {
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
+        scopeConverter.setAuthorityPrefix("SCOPE_");
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+
+            Collection<GrantedAuthority> scopeAuth = (Collection<GrantedAuthority>) scopeConverter.convert(jwt);
+            if (scopeAuth != null)
+                authorities.addAll(scopeAuth);
+
+            Object claim = jwt.getClaims().get("authorities");
+            if (claim != null) {
+                if (claim instanceof String) {
+                    String[] parts = ((String) claim).trim().split("\\s+");
+                    for (String p : parts) {
+                        if (!p.isBlank())
+                            authorities.add(new SimpleGrantedAuthority(p));
+                    }
+                } else if (claim instanceof Collection<?>) {
+                    ((Collection<?>) claim).forEach(o -> {
+                        if (o != null)
+                            authorities.add(new SimpleGrantedAuthority(o.toString()));
+                    });
+                } else if (claim instanceof Map<?, ?>) {
+                    ((Map<?, ?>) claim).values().forEach(v -> {
+                        if (v != null)
+                            authorities.add(new SimpleGrantedAuthority(v.toString()));
+                    });
+                }
+            }
+
+            return authorities;
+        });
+
+        return converter;
     }
 
     @Bean

@@ -1,5 +1,6 @@
 package com.security.Entity;
 
+import com.security.config.Audit;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,4 +22,6 @@ public class RoleEntity {
     @Column(unique = true, nullable = false)
     private String name;
     private String description;
+    @Embedded
+    private Audit audit;
 }
