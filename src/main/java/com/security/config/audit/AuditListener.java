@@ -1,4 +1,4 @@
-package com.security.config;
+package com.security.config.audit;
 
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;

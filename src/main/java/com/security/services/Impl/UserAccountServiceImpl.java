@@ -1,9 +1,9 @@
 package com.security.services.Impl;
 
-import com.security.DTOs.AuthResponseDTO;
-import com.security.Entity.UserEntity;
-import com.security.Repository.UserRepository;
-import com.security.config.Audit;
+import com.security.dtos.AuthResponseDTO;
+import com.security.entity.UserEntity;
+import com.security.repository.UserRepository;
+import com.security.config.audit.Audit;
 import com.security.services.UserAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,7 +1,7 @@
-package com.security.Entity;
+package com.security.entity;
 
-import com.security.config.Audit;
-import com.security.config.AuditListener;
+import com.security.config.audit.Audit;
+import com.security.config.audit.AuditListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

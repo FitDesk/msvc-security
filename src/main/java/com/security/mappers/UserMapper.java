@@ -1,7 +1,7 @@
-package com.security.Mappers;
+package com.security.mappers;
 
-import com.security.DTOs.UserDTO;
-import com.security.Entity.UserEntity;
+import com.security.dtos.UserDTO;
+import com.security.entity.UserEntity;
 import com.security.config.MapStructConfig;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

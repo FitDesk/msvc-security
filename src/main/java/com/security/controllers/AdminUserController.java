@@ -1,8 +1,8 @@
 package com.security.controllers;
 
-import com.security.DTOs.AuthResponseDTO;
-import com.security.DTOs.RoleChangeRequestDTO;
-import com.security.DTOs.RolesResponseDTO;
+import com.security.dtos.AuthResponseDTO;
+import com.security.dtos.RoleChangeRequestDTO;
+import com.security.dtos.RolesResponseDTO;
 import com.security.annotations.AdminAccess;
 import com.security.services.UserAccountService;
 import com.security.services.UserRoleService;

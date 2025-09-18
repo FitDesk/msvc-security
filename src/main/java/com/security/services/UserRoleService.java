@@ -1,9 +1,8 @@
 package com.security.services;
 
-import com.security.DTOs.AuthResponseDTO;
-import com.security.DTOs.RolesResponseDTO;
+import com.security.dtos.AuthResponseDTO;
+import com.security.dtos.RolesResponseDTO;
 
-import java.util.Set;
 import java.util.UUID;
 
 public interface UserRoleService {

@@ -1,6 +1,6 @@
 package com.security.services;
 
-import com.security.DTOs.AuthResponseDTO;
+import com.security.dtos.AuthResponseDTO;
 
 import java.util.UUID;
 

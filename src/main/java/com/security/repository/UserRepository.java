@@ -1,6 +1,6 @@
-package com.security.Repository;
+package com.security.repository;
 
-import com.security.Entity.UserEntity;
+import com.security.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

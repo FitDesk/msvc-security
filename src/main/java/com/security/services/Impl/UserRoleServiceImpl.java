@@ -1,11 +1,11 @@
 package com.security.services.Impl;
 
-import com.security.DTOs.AuthResponseDTO;
-import com.security.DTOs.RolesResponseDTO;
-import com.security.Entity.RoleEntity;
-import com.security.Entity.UserEntity;
-import com.security.Repository.RoleRepository;
-import com.security.Repository.UserRepository;
+import com.security.dtos.AuthResponseDTO;
+import com.security.dtos.RolesResponseDTO;
+import com.security.entity.RoleEntity;
+import com.security.entity.UserEntity;
+import com.security.repository.RoleRepository;
+import com.security.repository.UserRepository;
 import com.security.services.UserRoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

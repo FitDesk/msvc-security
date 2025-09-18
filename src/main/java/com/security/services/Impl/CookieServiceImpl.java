@@ -1,6 +1,6 @@
 package com.security.services.Impl;
 
-import com.security.DTOs.LoginResponseDTO;
+import com.security.dtos.LoginResponseDTO;
 import com.security.services.CookieService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
