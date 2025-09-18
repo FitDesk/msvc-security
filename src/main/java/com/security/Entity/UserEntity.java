@@ -1,5 +1,6 @@
 package com.security.Entity;
 
+import com.security.config.Audit;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,7 +31,11 @@ public class UserEntity implements UserDetails {
     private String password;
     private String firstName;
     private String lastName;
+    private String dni;
+    private String phone;
 
+    @Embedded
+    private Audit audit;
     @Builder.Default
     private Boolean enabled = true;
 

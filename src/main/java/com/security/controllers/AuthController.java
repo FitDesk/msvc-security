@@ -1,8 +1,9 @@
 package com.security.controllers;
 
-import com.fitdesk.security.annotations.*;
 import com.security.DTOs.LoginRequestDTO;
 import com.security.DTOs.LoginResponseDTO;
+import com.security.DTOs.RegisterRequestDto;
+import com.security.annotations.AuthenticatedAccess;
 import com.security.services.AuthService;
 import com.security.services.CookieService;
 import com.security.services.LoginResponseService;
@@ -17,8 +18,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/auth")
@@ -104,6 +107,27 @@ public class AuthController {
             log.error("Logout failed", e);
             cookieService.clearTokenCookies(response);
             return ResponseEntity.ok(loginResponseService.createSuccessResponse("Sesión cerrada"));
+        }
+    }
+
+
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody RegisterRequestDto registerRequestDto, HttpServletResponse response) {
+        try {
+            LoginResponseDTO authResponse = authService.registerUser(registerRequestDto);
+            cookieService.setSecureTokenCookies(response, authResponse);
+            Map<String, Object> safeResponse = loginResponseService.createSafeLoginResponse(authResponse);
+            log.info("Register successful for email: {}", registerRequestDto.email());
+            return ResponseEntity.status(HttpStatus.CREATED).body(safeResponse);
+        } catch (
+                ResponseStatusException ex) {
+            log.warn("Register failed: {}", ex.getMessage());
+            throw ex;
+        } catch (
+                Exception e) {
+            log.error("Register failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(loginResponseService.createErrorResponse("Error en el registro"));
         }
     }
 

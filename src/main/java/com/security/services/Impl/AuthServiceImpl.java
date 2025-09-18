@@ -2,18 +2,23 @@ package com.security.services.Impl;
 
 import com.security.DTOs.LoginRequestDTO;
 import com.security.DTOs.LoginResponseDTO;
+import com.security.DTOs.RegisterRequestDto;
+import com.security.Entity.RoleEntity;
 import com.security.Entity.UserEntity;
 import com.security.Mappers.UserMapper;
+import com.security.Repository.RoleRepository;
 import com.security.Repository.UserRepository;
 import com.security.services.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.security.services.TokenService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -29,8 +34,9 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
     private final UserMapper userMapper;
-    private final TokenService tokenService;
+    //    private final TokenService tokenService;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
 
@@ -139,67 +145,50 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto) {
+        if (userRepository.existsByEmail(registerRequestDto.email())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al inicial sesion");
+        }
 
-//    @Override
-//    public boolean validateToken(String token) {
-//        return tokenService.isTokenValid(token);
-//    }
+        if (userRepository.existsByUsername(registerRequestDto.firstName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al registrarse verifica tus credenciales");
 
-//    private UserEntity findUserByEmail(String email) {
-//        return userRepository.findByEmail(email)
-//                .orElseThrow(() -> {
-//                    log.warn("User not found with email: {}", email);
-//                    return new UsernameNotFoundException("Usuario no encontrado con el email: " + email);
-//                });
-//    }
+        }
 
-//    private void validatePassword(String rawPassword, String encodedPassword) {
-//        log.debug("Validating password - Raw length: {}, Encoded length: {}",
-//                rawPassword != null ? rawPassword.length() : 0,
-//                encodedPassword != null ? encodedPassword.length() : 0);
-//
-//        if (encodedPassword == null || encodedPassword.trim().isEmpty()) {
-//            log.error("Encoded password is null or empty");
-//            throw new BadCredentialsException("Contraseña incorrecta");
-//        }
-//
-//        if (rawPassword == null || rawPassword.trim().isEmpty()) {
-//            log.error("Raw password is null or empty");
-//            throw new BadCredentialsException("Contraseña incorrecta");
-//        }
-//
-//        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
-//            log.warn("Password validation failed");
-//            throw new BadCredentialsException("Contraseña incorrecta");
-//        }
-//
-//        log.debug("Password validation successful");
-//    }
+        if (userRepository.existsByDni(registerRequestDto.dni())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al registrarse verifica tus credenciales");
+        }
+        RoleEntity userRole = roleRepository.findByName("USER").orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al encontrar el rol de Usuario"));
 
 
-//    private void validateUserStatus(UserEntity user) {
-//        if (!user.getEnabled()) {
-//            log.warn("User account is disabled: {}", user.getEmail());
-//            throw new DisabledException("La cuenta de usuario está deshabilitada");
-//        }
-//
-//        if (!user.isAccountNonLocked()) {
-//            log.warn("User account is locked: {}", user.getEmail());
-//            throw new DisabledException("La cuenta de usuario está bloqueada");
-//        }
-//
-//        if (!user.isAccountNonExpired()) {
-//            log.warn("User account is expired: {}", user.getEmail());
-//            throw new DisabledException("La cuenta de usuario ha expirado");
-//        }
-//    }
+        UserEntity user = UserEntity.builder()
+                .firstName(registerRequestDto.firstName())
+                .lastName(registerRequestDto.lastName())
+                .email(registerRequestDto.email())
+                .username((registerRequestDto.firstName() + "." + registerRequestDto.lastName()).toLowerCase())
+                .dni(registerRequestDto.dni())
+                .phone(registerRequestDto.phone())
+                .password(passwordEncoder.encode(registerRequestDto.password()))
+                .roles(Set.of(userRole))
+                .enabled(true)
+                .build();
 
-//    private String maskToken(String token) {
-//        if (token == null || token.length() < 10) {
-//            return "***";
-//        }
-//        return token.substring(0, 10) + "...";
-//    }
+        userRepository.save(user);
+        String accessToken = generateAccessToken(user);
+        String refreshToken = generateRefreshToken(user);
+        validRefreshTokens.add(refreshToken);
+        return LoginResponseDTO.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
+                .scope("read write")
+                .user(userMapper.toDTO(user))
+                .message("Registro exitoso")
+                .build();
+    }
+
 
     private String generateRefreshToken(UserEntity user) {
         Instant now = Instant.now();

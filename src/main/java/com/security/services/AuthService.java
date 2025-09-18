@@ -2,6 +2,7 @@ package com.security.services;
 
 import com.security.DTOs.LoginRequestDTO;
 import com.security.DTOs.LoginResponseDTO;
+import com.security.DTOs.RegisterRequestDto;
 import com.security.Entity.UserEntity;
 
 public interface AuthService {
@@ -12,6 +13,7 @@ public interface AuthService {
 
 //    boolean validateToken(String token);
 
+    LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto);
 
     LoginResponseDTO refreshToken(String refreshToken);
 

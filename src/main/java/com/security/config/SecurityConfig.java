@@ -40,7 +40,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.util.UUID;
 
-import com.fitdesk.security.annotations.*;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -80,6 +79,7 @@ public class SecurityConfig {
                                 "/auth/status",
                                 "/auth/login",
                                 "/auth/refresh",
+                                "/auth/register",
                                 "/saludo",
                                 "/"
                         ).permitAll()
