@@ -4,7 +4,6 @@ import com.security.DTOs.AuthResponseDTO;
 import com.security.DTOs.RoleChangeRequestDTO;
 import com.security.DTOs.RolesResponseDTO;
 import com.security.annotations.AdminAccess;
-import com.security.services.LoginResponseService;
 import com.security.services.UserAccountService;
 import com.security.services.UserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +24,6 @@ public class AdminUserController {
 
     private final UserRoleService userRoleService;
     private final UserAccountService userAccountService;
-    private final LoginResponseService loginResponseService;
 
     @Operation(summary = "Listar roles de usuario")
     @GetMapping("/{id}/roles")

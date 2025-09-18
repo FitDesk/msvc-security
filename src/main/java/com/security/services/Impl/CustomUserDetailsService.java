@@ -1,4 +1,4 @@
-package com.security.services;
+package com.security.services.Impl;
 
 import com.security.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;

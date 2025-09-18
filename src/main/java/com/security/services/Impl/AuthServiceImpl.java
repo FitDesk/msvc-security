@@ -1,5 +1,6 @@
 package com.security.services.Impl;
 
+import com.security.DTOs.AuthResponseDTO;
 import com.security.DTOs.LoginRequestDTO;
 import com.security.DTOs.LoginResponseDTO;
 import com.security.DTOs.RegisterRequestDto;
@@ -9,10 +10,14 @@ import com.security.Mappers.UserMapper;
 import com.security.Repository.RoleRepository;
 import com.security.Repository.UserRepository;
 import com.security.services.AuthService;
+import com.security.services.CookieService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.security.services.TokenService;
+//import com.security.services.TokenService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
@@ -36,7 +41,6 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
-    //    private final TokenService tokenService;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
 
@@ -144,6 +148,8 @@ public class AuthServiceImpl implements AuthService {
             log.error("Error during logout", e);
         }
     }
+
+
 
     @Override
     public LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto) {
