@@ -22,7 +22,8 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String token = extractTokenFromCookies(request);
-
+        log.debug("Token from cookies: {}", token);
+        log.debug("Authorization header: {}", request.getHeader("Authorization"));
         if (token != null) {
             HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(request) {
                 @Override

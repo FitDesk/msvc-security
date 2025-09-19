@@ -1,55 +1,59 @@
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
+COPY . .
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+VOLUME /tmp
+RUN apk add --no-cache curl wget
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+COPY --from=build /workspace/target/*.jar app.jar
+RUN chown appuser:appgroup app.jar
+USER appuser
+EXPOSE 9091
+ENV SPRING_PROFILES_ACTIVE=prod
+CMD ["java", "-jar", "app.jar"]
+
+
+
+
 # FROM maven:3.9-eclipse-temurin-21 AS build
 # WORKDIR /workspace
-# COPY . .
-# RUN mvn clean package -DskipTests
+
+# COPY ../security-common ./security-common
+# WORKDIR /workspace/security-common
+# RUN mvn clean install -DskipTests -q
+
+# WORKDIR /workspace/msvc-security
+# COPY pom.xml ./
+# COPY mvnw ./
+# COPY .mvn ./.mvn
+# RUN chmod +x mvnw
+
+# RUN ./mvnw dependency:resolve -q
+
+# COPY src ./src
+# RUN ./mvnw clean package -DskipTests -q
 
 # FROM eclipse-temurin:21-jre-alpine
 # VOLUME /tmp
-# RUN apk add --no-cache curl
-# COPY --from=build /workspace/target/*.jar app.jar
+
+# RUN apk add --no-cache curl wget
+
+# RUN addgroup -g 1001 -S appgroup && \
+#     adduser -u 1001 -S appuser -G appgroup
+
+# COPY --from=build /workspace/msvc-security/target/*.jar app.jar
+# RUN chown appuser:appgroup app.jar
+
+# USER appuser
 
 # EXPOSE 9091
 # ENV SPRING_PROFILES_ACTIVE=prod
-# CMD ["java", "-jar", "app.jar"]
+# ENV JAVA_OPTS="-Xmx512m -Xms256m -server"
 
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+#   CMD curl -f http://localhost:9091/actuator/health || exit 1
 
-# syntax=docker/dockerfile:1
-
-FROM maven:3.9-eclipse-temurin-21 AS build
-WORKDIR /workspace
-
-# ✅ Primero instalar security-common desde JitPack
-COPY pom.xml ./
-COPY mvnw ./
-COPY .mvn ./.mvn
-RUN chmod +x mvnw
-
-# ✅ Descargar dependencias (incluyendo security-common de JitPack)
-RUN ./mvnw dependency:resolve -q
-
-# ✅ Copiar código fuente y construir
-COPY src ./src
-RUN ./mvnw clean package -DskipTests -q
-
-# ✅ Imagen final optimizada
-FROM eclipse-temurin:21-jre-alpine
-VOLUME /tmp
-
-RUN apk add --no-cache curl wget
-
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
-
-COPY --from=build /workspace/target/*.jar app.jar
-RUN chown appuser:appgroup app.jar
-
-USER appuser
-
-EXPOSE 9091
-ENV SPRING_PROFILES_ACTIVE=prod
-ENV JAVA_OPTS="-Xmx512m -Xms256m -server"
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:9091/actuator/health || exit 1
-
-CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

@@ -21,6 +21,8 @@ public class DataInitializer implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
+
+
     @Override
     public void run(String... args) throws Exception {
         RoleEntity adminRole = roleRepository.findByName("ADMIN")
