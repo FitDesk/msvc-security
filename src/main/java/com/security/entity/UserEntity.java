@@ -1,5 +1,7 @@
-package com.security.Entity;
+package com.security.entity;
 
+import com.security.config.audit.Audit;
+import com.security.config.audit.AuditListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@EntityListeners(AuditListener.class)
 @Entity
 @Table(name = "users")
 @Data
@@ -30,7 +33,11 @@ public class UserEntity implements UserDetails {
     private String password;
     private String firstName;
     private String lastName;
+    private String dni;
+    private String phone;
 
+    @Embedded
+    private Audit audit;
     @Builder.Default
     private Boolean enabled = true;
 

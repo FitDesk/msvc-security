@@ -1,4 +1,4 @@
-package com.security.config;
+package com.security.config.auth;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -6,7 +6,6 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -15,6 +14,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -32,6 +33,8 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.security.KeyPair;
@@ -39,33 +42,24 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
-
 
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final AuthProperties authProperties;
-//    @Value("${auth.client.redirect-uris}")
-//    private String[] redirectUris;
-//
-//    @Value("${auth.client.post-logout-redirect-uri}")
-//    private String postLogoutRedirectUri;
-//    @Value("${auth.server.issuer}")
-//    private String issuerUri;
-
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 OAuth2AuthorizationServerConfigurer.authorizationServer();
+
         http
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .with(authorizationServerConfigurer, (authorizationServer) ->
@@ -92,6 +86,7 @@ public class SecurityConfig {
                                 "/auth/status",
                                 "/auth/login",
                                 "/auth/refresh",
+                                "/auth/register",
                                 "/saludo",
                                 "/"
                         ).permitAll()
@@ -106,8 +101,47 @@ public class SecurityConfig {
     }
 
     @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
+        scopeConverter.setAuthorityPrefix("SCOPE_");
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+
+            Collection<GrantedAuthority> scopeAuth = (Collection<GrantedAuthority>) scopeConverter.convert(jwt);
+            if (scopeAuth != null)
+                authorities.addAll(scopeAuth);
+
+            Object claim = jwt.getClaims().get("authorities");
+            if (claim != null) {
+                if (claim instanceof String) {
+                    String[] parts = ((String) claim).trim().split("\\s+");
+                    for (String p : parts) {
+                        if (!p.isBlank())
+                            authorities.add(new SimpleGrantedAuthority(p));
+                    }
+                } else if (claim instanceof Collection<?>) {
+                    ((Collection<?>) claim).forEach(o -> {
+                        if (o != null)
+                            authorities.add(new SimpleGrantedAuthority(o.toString()));
+                    });
+                } else if (claim instanceof Map<?, ?>) {
+                    ((Map<?, ?>) claim).values().forEach(v -> {
+                        if (v != null)
+                            authorities.add(new SimpleGrantedAuthority(v.toString()));
+                    });
+                }
+            }
+
+            return authorities;
+        });
+
+        return converter;
+    }
+
+    @Bean
     public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient.Builder clientBuilder = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient gatewayClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("gateway-client")
                 .clientSecret(passwordEncoder().encode("gateway-secret"))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
@@ -115,7 +149,9 @@ public class SecurityConfig {
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .postLogoutRedirectUri(authProperties.getClient().getPostLogoutRedirectUri())
+                .redirectUri("http://localhost:9090/login/oauth2/code/gateway-client")
+                .redirectUri("http://localhost:9090/authorized")
+                .postLogoutRedirectUri("http://localhost:9090/logout")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .scope(OidcScopes.EMAIL)
@@ -125,17 +161,16 @@ public class SecurityConfig {
                         .requireAuthorizationConsent(false)
                         .requireProofKey(false)
                         .build())
+
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.ofMinutes(15))
                         .refreshTokenTimeToLive(Duration.ofDays(7))
                         .reuseRefreshTokens(false)
                         .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
-                        .build());
+                        .build())
+                .build();
 
-        authProperties.getClient().getRedirectUris()
-                .forEach(clientBuilder::redirectUri);
-
-        return new InMemoryRegisteredClientRepository(clientBuilder.build());
+        return new InMemoryRegisteredClientRepository(gatewayClient);
     }
 
     @Bean
@@ -177,7 +212,7 @@ public class SecurityConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
-                .issuer(authProperties.getServer().getIssuer())
+                .issuer("http://localhost:9091")
                 .authorizationEndpoint("/oauth2/authorize")
                 .tokenEndpoint("/oauth2/token")
                 .tokenIntrospectionEndpoint("/oauth2/introspect")

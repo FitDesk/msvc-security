@@ -1,4 +1,4 @@
-package com.security.config;
+package com.security.config.auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

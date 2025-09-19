@@ -1,9 +1,9 @@
 package com.security.config;
 
-import com.security.Entity.RoleEntity;
-import com.security.Entity.UserEntity;
-import com.security.Repository.RoleRepository;
-import com.security.Repository.UserRepository;
+import com.security.entity.RoleEntity;
+import com.security.entity.UserEntity;
+import com.security.repository.RoleRepository;
+import com.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

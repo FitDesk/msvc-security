@@ -1,19 +1,24 @@
 package com.security.services.Impl;
 
-import com.security.DTOs.LoginRequestDTO;
-import com.security.DTOs.LoginResponseDTO;
-import com.security.Entity.UserEntity;
-import com.security.Mappers.UserMapper;
-import com.security.Repository.UserRepository;
-import com.security.config.AuthProperties;
+import com.security.dtos.LoginRequestDTO;
+import com.security.dtos.LoginResponseDTO;
+import com.security.dtos.RegisterRequestDto;
+import com.security.entity.RoleEntity;
+import com.security.entity.UserEntity;
+import com.security.mappers.UserMapper;
+import com.security.repository.RoleRepository;
+import com.security.repository.UserRepository;
 import com.security.services.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+//import com.security.services.TokenService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -27,10 +32,9 @@ import java.util.stream.Collectors;
 @Transactional
 public class AuthServiceImpl implements AuthService {
 
-    private final AuthProperties authProperties;
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
@@ -141,11 +145,57 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
+
+    @Override
+    public LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto) {
+        if (userRepository.existsByEmail(registerRequestDto.email())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al inicial sesion");
+        }
+
+        if (userRepository.existsByUsername(registerRequestDto.firstName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al registrarse verifica tus credenciales");
+
+        }
+
+        if (userRepository.existsByDni(registerRequestDto.dni())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al registrarse verifica tus credenciales");
+        }
+        RoleEntity userRole = roleRepository.findByName("USER").orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al encontrar el rol de Usuario"));
+
+
+        UserEntity user = UserEntity.builder()
+                .firstName(registerRequestDto.firstName())
+                .lastName(registerRequestDto.lastName())
+                .email(registerRequestDto.email())
+                .username((registerRequestDto.firstName() + "." + registerRequestDto.lastName()).toLowerCase())
+                .dni(registerRequestDto.dni())
+                .phone(registerRequestDto.phone())
+                .password(passwordEncoder.encode(registerRequestDto.password()))
+                .roles(Set.of(userRole))
+                .enabled(true)
+                .build();
+
+        userRepository.save(user);
+        String accessToken = generateAccessToken(user);
+        String refreshToken = generateRefreshToken(user);
+        validRefreshTokens.add(refreshToken);
+        return LoginResponseDTO.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
+                .scope("read write")
+                .user(userMapper.toDTO(user))
+                .message("Registro exitoso")
+                .build();
+    }
+
+
     private String generateRefreshToken(UserEntity user) {
         Instant now = Instant.now();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(authProperties.getServer().getIssuer())
+                .issuer("http://localhost:9091")
                 .issuedAt(now)
                 .expiresAt(now.plus(7, ChronoUnit.DAYS))
                 .subject(user.getEmail())
@@ -168,7 +218,7 @@ public class AuthServiceImpl implements AuthService {
                 .collect(Collectors.joining(" "));
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(authProperties.getServer().getIssuer())
+                .issuer("http://localhost:9091")
                 .issuedAt(now)
                 .expiresAt(now.plus(15, ChronoUnit.MINUTES))
                 .subject(user.getEmail())
@@ -183,5 +233,6 @@ public class AuthServiceImpl implements AuthService {
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
+
 
 }

@@ -1,7 +1,7 @@
-package com.security.Mappers;
+package com.security.mappers;
 
-import com.security.DTOs.RoleDTO;
-import com.security.Entity.RoleEntity;
+import com.security.dtos.RoleDTO;
+import com.security.entity.RoleEntity;
 import com.security.config.MapStructConfig;
 import org.mapstruct.Mapper;
 
