@@ -87,7 +87,8 @@ public class SecurityConfig {
                                 "/auth/login",
                                 "/auth/refresh",
                                 "/auth/register",
-                                "/saludo",
+                                "/test/saludo",
+                                "/test/notification",
                                 "/"
                         ).permitAll()
                         .anyRequest().authenticated()

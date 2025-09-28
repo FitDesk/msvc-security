@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 //import com.security.services.TokenService;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
@@ -22,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -38,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
+//    private final KafkaTemplate<String, Object> kafkaTemplate;
 
 
     private final Set<String> validRefreshTokens = ConcurrentHashMap.newKeySet();
@@ -145,7 +148,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-
     @Override
     public LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto) {
         if (userRepository.existsByEmail(registerRequestDto.email())) {
@@ -176,6 +178,19 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
+//
+//        Map<String, Object> event = Map.of(
+//                "type", "user.created",
+//                "user", Map.of(
+//                        "id", user.getId(),
+//                        "username", user.getUsername(),
+//                        "email", user.getEmail(),
+//                        "firstName", user.getFirstName(),
+//                        "lastName", user.getLastName()
+//                )
+//        );
+//        kafkaTemplate.send("user.created", user.getId().toString(), event);
+
         String accessToken = generateAccessToken(user);
         String refreshToken = generateRefreshToken(user);
         validRefreshTokens.add(refreshToken);
