@@ -1,12 +1,12 @@
-package com.security.config;
+package com.security.config.kafka;
 
 import com.security.events.NotificationEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
@@ -20,9 +20,9 @@ import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
-public class KafkaConfig {
+@Slf4j
+public class KafkaProducerConfig {
 
-    //    private final KafkaProperties kafkaProperties;
     @Value("${spring.kafka.producer.bootstrap-servers}")
     private String bootstrapServers;
     @Value("${spring.kafka.producer.acks}")
@@ -31,25 +31,29 @@ public class KafkaConfig {
     private String deliveryTimeout;
     @Value("${spring.kafka.producer.properties.linger.ms}")
     private String linger;
-//    @Value("${spring.kafka.producer.properties.request.timeout.ms}")
-//    private String requestTimeout;
+    @Value("${spring.kafka.producer.properties.request.timeout.ms}")
+    private String requestTimeout;
 
     @Value("${spring.kafka.producer.properties.enable.idempotence}")
     private boolean idempotence;
     @Value("${spring.kafka.producer.properties.max.in.flight.requests.per.connection:5}")
     private Integer inflightRequests;
 
+
     @Bean
     Map<String, Object> producerConfigs() {
         Map<String, Object> config = new HashMap<>();
+
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.putIfAbsent(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.putIfAbsent(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         config.putIfAbsent(ProducerConfig.ACKS_CONFIG, acks);
-        config.putIfAbsent(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG,deliveryTimeout);
+        config.putIfAbsent(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeout);
         config.putIfAbsent(ProducerConfig.LINGER_MS_CONFIG, linger);
+        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeout);
         config.putIfAbsent(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, idempotence);
         config.putIfAbsent(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, inflightRequests);
+//        config.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE); //Optional ya que por defecto ya lo es
         config.putIfAbsent(ProducerConfig.RETRIES_CONFIG, 10);
 
 
