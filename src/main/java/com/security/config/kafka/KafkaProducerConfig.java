@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@RequiredArgsConstructor
 @Slf4j
 public class KafkaProducerConfig {
 
@@ -39,24 +38,20 @@ public class KafkaProducerConfig {
     @Value("${spring.kafka.producer.properties.max.in.flight.requests.per.connection:5}")
     private Integer inflightRequests;
 
-
-    @Bean
     Map<String, Object> producerConfigs() {
         Map<String, Object> config = new HashMap<>();
 
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.putIfAbsent(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.putIfAbsent(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        config.putIfAbsent(ProducerConfig.ACKS_CONFIG, acks);
-        config.putIfAbsent(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeout);
-        config.putIfAbsent(ProducerConfig.LINGER_MS_CONFIG, linger);
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        config.put(ProducerConfig.ACKS_CONFIG, acks);
+        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeout);
+        config.put(ProducerConfig.LINGER_MS_CONFIG, linger);
         config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeout);
-        config.putIfAbsent(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, idempotence);
-        config.putIfAbsent(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, inflightRequests);
-//        config.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE); //Optional ya que por defecto ya lo es
-        config.putIfAbsent(ProducerConfig.RETRIES_CONFIG, 10);
-
-
+        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, idempotence);
+        config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, inflightRequests);
+        config.put(JsonSerializer.TYPE_MAPPINGS, "NotificationEvent:com.security.events.NotificationEvent");
+        config.put(ProducerConfig.RETRIES_CONFIG, 10);
         return config;
     }
 
