@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class NotificationServiceImpl {
-    private final KafkaTemplate<String, NotificationEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
     public void sendNotification(String message) {

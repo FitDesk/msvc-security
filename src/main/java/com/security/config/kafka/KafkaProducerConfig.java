@@ -1,7 +1,5 @@
 package com.security.config.kafka;
 
-import com.security.events.NotificationEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -50,19 +48,19 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeout);
         config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, idempotence);
         config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, inflightRequests);
-        config.put(JsonSerializer.TYPE_MAPPINGS, "NotificationEvent:com.security.events.NotificationEvent");
+        config.put(JsonSerializer.TYPE_MAPPINGS, "NotificationEvent:com.security.events.NotificationEvent,CreatedUserEvent:com.security.events.CreatedUserEvent");
         config.put(ProducerConfig.RETRIES_CONFIG, 10);
         return config;
     }
 
     @Bean
-    ProducerFactory<String, NotificationEvent> producerFactory() {
+    ProducerFactory<String, Object> producerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 
     @Bean
-    public KafkaTemplate<String, NotificationEvent> kafkaTemplate() {
-        return new KafkaTemplate<String, NotificationEvent>(producerFactory());
+    public KafkaTemplate<String, Object> kafkaTemplate() {
+        return new KafkaTemplate<String, Object>(producerFactory());
     }
 
     @Bean

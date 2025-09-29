@@ -28,13 +28,13 @@ public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    private String username;
+//    private String username;
     private String email;
     private String password;
-    private String firstName;
-    private String lastName;
-    private String dni;
-    private String phone;
+//    private String firstName;
+//    private String lastName;
+//    private String dni;
+//    private String phone;
 
     @Embedded
     private Audit audit;

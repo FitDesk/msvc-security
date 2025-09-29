@@ -5,13 +5,13 @@ import com.security.dtos.LoginResponseDTO;
 import com.security.dtos.RegisterRequestDto;
 import com.security.entity.RoleEntity;
 import com.security.entity.UserEntity;
+import com.security.events.CreatedUserEvent;
 import com.security.mappers.UserMapper;
 import com.security.repository.RoleRepository;
 import com.security.repository.UserRepository;
 import com.security.services.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-//import com.security.services.TokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -23,7 +23,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -40,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
-//    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
 
     private final Set<String> validRefreshTokens = ConcurrentHashMap.newKeySet();
@@ -154,49 +153,34 @@ public class AuthServiceImpl implements AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al inicial sesion");
         }
 
-        if (userRepository.existsByUsername(registerRequestDto.firstName())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al registrarse verifica tus credenciales");
 
-        }
-
-        if (userRepository.existsByDni(registerRequestDto.dni())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al registrarse verifica tus credenciales");
-        }
         RoleEntity userRole = roleRepository.findByName("USER").orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al encontrar el rol de Usuario"));
 
 
         UserEntity user = UserEntity.builder()
-                .firstName(registerRequestDto.firstName())
-                .lastName(registerRequestDto.lastName())
                 .email(registerRequestDto.email())
-                .username((registerRequestDto.firstName() + "." + registerRequestDto.lastName()).toLowerCase())
-                .dni(registerRequestDto.dni())
-                .phone(registerRequestDto.phone())
                 .password(passwordEncoder.encode(registerRequestDto.password()))
                 .roles(Set.of(userRole))
                 .enabled(true)
                 .build();
 
         userRepository.save(user);
-//
-//        Map<String, Object> event = Map.of(
-//                "type", "user.created",
-//                "user", Map.of(
-//                        "id", user.getId(),
-//                        "username", user.getUsername(),
-//                        "email", user.getEmail(),
-//                        "firstName", user.getFirstName(),
-//                        "lastName", user.getLastName()
-//                )
-//        );
-//        kafkaTemplate.send("user.created", user.getId().toString(), event);
 
-        String accessToken = generateAccessToken(user);
-        String refreshToken = generateRefreshToken(user);
-        validRefreshTokens.add(refreshToken);
+        CreatedUserEvent event = new CreatedUserEvent(
+                user.getId().toString(),
+                registerRequestDto.firstName(),
+                registerRequestDto.lastName(),
+                registerRequestDto.dni(),
+                registerRequestDto.phone()
+        );
+
+        log.info("Enviando evento {}", event);
+        kafkaTemplate.send("user-created-event-topic", event);
+        log.info("Evento enviado {}", event);
+
         return LoginResponseDTO.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .accessToken(generateAccessToken(user))
+                .refreshToken(generateRefreshToken(user))
                 .tokenType("Bearer")
                 .expiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
                 .scope("read write")
@@ -221,10 +205,6 @@ public class AuthServiceImpl implements AuthService {
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 
-    public boolean isTokenBlacklisted(String token) {
-        return blacklistedTokens.contains(token);
-    }
-
     private String generateAccessToken(UserEntity user) {
         Instant now = Instant.now();
 
@@ -242,8 +222,6 @@ public class AuthServiceImpl implements AuthService {
                 .claim("user_id", user.getId().toString())
                 .claim("username", user.getUsername())
                 .claim("email", user.getEmail())
-                .claim("firstName", user.getFirstName())
-                .claim("lastName", user.getLastName())
                 .build();
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
