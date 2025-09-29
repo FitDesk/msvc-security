@@ -16,14 +16,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String emailOrUsername) throws UsernameNotFoundException {
-        log.debug("Loading user by email or username: {}", emailOrUsername);
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        log.debug("Loading user by email or username: {}", email);
 
-        return userRepository.findByEmail(emailOrUsername)
-                .or(() -> userRepository.findByUsername(emailOrUsername))
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    log.warn("User not found with email or username: {}", emailOrUsername);
-                    return new UsernameNotFoundException("Usuario no encontrado: " + emailOrUsername);
+                    log.warn("User not found with email : {}", email);
+                    return new UsernameNotFoundException("Usuario no encontrado: " + email);
                 });
     }
 }
