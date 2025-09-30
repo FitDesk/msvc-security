@@ -40,7 +40,6 @@ public class CookieServiceImpl implements CookieService {
         log.debug("Token cookies cleared");
     }
 
-
     @Override
     public String extractAccessTokenFromCookies(HttpServletRequest request) {
         return extractTokenFromCookies(request, "access_token");
@@ -50,7 +49,6 @@ public class CookieServiceImpl implements CookieService {
     public String extractRefreshTokenFromCookies(HttpServletRequest request) {
         return extractTokenFromCookies(request, "refresh_token");
     }
-
 
     private String extractTokenFromCookies(HttpServletRequest request, String tokenName) {
         if (request.getCookies() != null) {
@@ -63,33 +61,40 @@ public class CookieServiceImpl implements CookieService {
         return null;
     }
 
-
     private void setSecureCookie(HttpServletResponse response, String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
         cookie.setSecure(cookieSecure);
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
-
         if (!"localhost".equals(cookieDomain)) {
             cookie.setDomain(cookieDomain);
         }
-
         response.addCookie(cookie);
 
-        String sameSiteValue = cookieSecure ? "None" : "Strict";
+        /**
+         * SameSite previene ataques de CSRF -> Cross Site Request Forgery
+         * 
+         * Strict -> Las cookies solo se envian en solicitudes realizadas desde el mismo dominio, no se recomineda
+         * si el front y el back esta en diferentes dominios
+         * 
+         * Lax -> Las cookies se envian en solicitudes de navegador a nivel superior (no fetch en js), adecuada para mayoria de casos
+         * 
+         * None -> Las cookies se envian en toda las peticiones incluidas las de cross-origin , requiere que la cookie tenga el atributo Secure habilitado osea
+         * HTTPS , util si el dominio del back y front es diferente
+         */
+        String sameSiteValue = cookieSecure ? "None" : "Lax";
+
         String cookieHeader = String.format("%s=%s; Path=/; HttpOnly; Max-Age=%d; SameSite=%s%s%s",
                 name,
                 value,
                 maxAge,
                 sameSiteValue,
                 cookieSecure ? "; Secure" : "",
-                !"localhost".equals(cookieDomain) ? "; Domain=" + cookieDomain : ""
-        );
+                !"localhost".equals(cookieDomain) ? "; Domain=" + cookieDomain : "");
 
         response.addHeader("Set-Cookie", cookieHeader);
     }
-
 
     private void clearCookie(HttpServletResponse response, String name) {
         Cookie cookie = new Cookie(name, "");
@@ -100,6 +105,5 @@ public class CookieServiceImpl implements CookieService {
 
         response.addHeader("Set-Cookie", String.format("%s=; Path=/; HttpOnly; Max-Age=0", name));
     }
-
 
 }
