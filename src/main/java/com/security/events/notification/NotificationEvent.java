@@ -1,4 +1,4 @@
-package com.security.events;
+package com.security.events.notification;
 
 public record NotificationEvent(
         String message

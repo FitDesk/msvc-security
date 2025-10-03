@@ -1,6 +1,6 @@
 package com.security.services.Impl;
 
-import com.security.dtos.AuthResponseDTO;
+import com.security.dtos.auth.AuthResponseDTO;
 import com.security.entity.UserEntity;
 import com.security.repository.UserRepository;
 import com.security.config.audit.Audit;

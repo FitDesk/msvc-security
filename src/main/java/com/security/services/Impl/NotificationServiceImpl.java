@@ -1,6 +1,6 @@
 package com.security.services.Impl;
 
-import com.security.events.NotificationEvent;
+import com.security.events.notification.NotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

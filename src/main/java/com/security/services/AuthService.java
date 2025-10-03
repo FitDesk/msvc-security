@@ -1,8 +1,8 @@
 package com.security.services;
 
-import com.security.dtos.LoginRequestDTO;
-import com.security.dtos.LoginResponseDTO;
-import com.security.dtos.RegisterRequestDto;
+import com.security.dtos.auth.LoginRequestDTO;
+import com.security.dtos.auth.LoginResponseDTO;
+import com.security.dtos.auth.RegisterRequestDto;
 
 
 public interface AuthService {

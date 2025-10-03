@@ -1,5 +1,6 @@
-package com.security.dtos;
+package com.security.dtos.auth;
 
+import com.security.dtos.autorization.UserDTO;
 import lombok.*;
 
 import java.time.Instant;

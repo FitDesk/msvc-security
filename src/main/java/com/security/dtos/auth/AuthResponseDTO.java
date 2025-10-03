@@ -1,4 +1,4 @@
-package com.security.dtos;
+package com.security.dtos.auth;
 
 import java.time.Instant;
 

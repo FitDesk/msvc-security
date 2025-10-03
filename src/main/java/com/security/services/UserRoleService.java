@@ -1,7 +1,7 @@
 package com.security.services;
 
-import com.security.dtos.AuthResponseDTO;
-import com.security.dtos.RolesResponseDTO;
+import com.security.dtos.auth.AuthResponseDTO;
+import com.security.dtos.autorization.RolesResponseDTO;
 
 import java.util.UUID;
 

@@ -1,9 +1,9 @@
 package com.security.controllers;
 
-import com.security.dtos.AuthResponseDTO;
-import com.security.dtos.LoginRequestDTO;
-import com.security.dtos.LoginResponseDTO;
-import com.security.dtos.RegisterRequestDto;
+import com.security.dtos.auth.AuthResponseDTO;
+import com.security.dtos.auth.LoginRequestDTO;
+import com.security.dtos.auth.LoginResponseDTO;
+import com.security.dtos.auth.RegisterRequestDto;
 import com.security.annotations.AuthenticatedAccess;
 import com.security.services.AuthService;
 import com.security.services.CookieService;

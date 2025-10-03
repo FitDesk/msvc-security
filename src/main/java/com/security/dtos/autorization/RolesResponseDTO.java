@@ -1,4 +1,4 @@
-package com.security.dtos;
+package com.security.dtos.autorization;
 
 import java.util.Set;
 import java.util.UUID;
