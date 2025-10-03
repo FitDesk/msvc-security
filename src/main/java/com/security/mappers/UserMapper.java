@@ -1,6 +1,6 @@
 package com.security.mappers;
 
-import com.security.dtos.UserDTO;
+import com.security.dtos.autorization.UserDTO;
 import com.security.entity.UserEntity;
 import com.security.config.MapStructConfig;
 import org.mapstruct.Mapper;

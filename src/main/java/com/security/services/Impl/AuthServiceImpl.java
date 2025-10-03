@@ -1,11 +1,11 @@
 package com.security.services.Impl;
 
-import com.security.dtos.LoginRequestDTO;
-import com.security.dtos.LoginResponseDTO;
-import com.security.dtos.RegisterRequestDto;
+import com.security.dtos.auth.LoginRequestDTO;
+import com.security.dtos.auth.LoginResponseDTO;
+import com.security.dtos.auth.RegisterRequestDto;
 import com.security.entity.RoleEntity;
 import com.security.entity.UserEntity;
-import com.security.events.CreatedUserEvent;
+import com.security.events.notification.CreatedUserEvent;
 import com.security.mappers.UserMapper;
 import com.security.repository.RoleRepository;
 import com.security.repository.UserRepository;

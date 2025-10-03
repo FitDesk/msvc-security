@@ -1,4 +1,4 @@
-package com.security.dtos;
+package com.security.dtos.autorization;
 
 import jakarta.validation.constraints.NotBlank;
 

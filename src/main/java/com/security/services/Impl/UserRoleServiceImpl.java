@@ -1,7 +1,7 @@
 package com.security.services.Impl;
 
-import com.security.dtos.AuthResponseDTO;
-import com.security.dtos.RolesResponseDTO;
+import com.security.dtos.auth.AuthResponseDTO;
+import com.security.dtos.autorization.RolesResponseDTO;
 import com.security.entity.RoleEntity;
 import com.security.entity.UserEntity;
 import com.security.repository.RoleRepository;

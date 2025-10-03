@@ -1,7 +1,7 @@
 package com.security.services;
 
 
-import com.security.dtos.LoginResponseDTO;
+import com.security.dtos.auth.LoginResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
