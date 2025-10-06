@@ -5,27 +5,30 @@ import com.security.dtos.auth.LoginResponseDTO;
 import com.security.dtos.auth.RegisterRequestDto;
 import com.security.entity.RoleEntity;
 import com.security.entity.UserEntity;
+import com.security.enums.AuthProvider;
 import com.security.events.notification.CreatedUserEvent;
+import com.security.exceptions.AuthenticationException;
+import com.security.exceptions.RoleNotFoundException;
+import com.security.exceptions.UserNotFoundException;
 import com.security.mappers.UserMapper;
 import com.security.repository.RoleRepository;
 import com.security.repository.UserRepository;
 import com.security.services.AuthService;
+import com.security.services.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final TokenService tokenService;
 
 
     private final Set<String> validRefreshTokens = ConcurrentHashMap.newKeySet();
@@ -50,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
         log.info("Authenticating user: {}", request.getEmail());
 
         UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Credenciales inválidas");
@@ -60,8 +64,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Usuario deshabilitado");
         }
 
-        String accessToken = generateAccessToken(user);
-        String refreshToken = generateRefreshToken(user);
+        String accessToken = tokenService.generateAccessToken(user);
+        String refreshToken = tokenService.generateRefreshToken(user);
 
         validRefreshTokens.add(refreshToken);
 
@@ -89,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
             String email = jwt.getSubject();
 
             UserEntity user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
+                    .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
 
             if (!user.isEnabled()) {
                 throw new BadCredentialsException("Usuario deshabilitado");
@@ -97,8 +101,8 @@ public class AuthServiceImpl implements AuthService {
 
             validRefreshTokens.remove(refreshToken);
 
-            String newAccessToken = generateAccessToken(user);
-            String newRefreshToken = generateRefreshToken(user);
+            String newAccessToken = tokenService.generateAccessToken(user);
+            String newRefreshToken = tokenService.generateRefreshToken(user);
 
             validRefreshTokens.add(newRefreshToken);
 
@@ -117,6 +121,25 @@ public class AuthServiceImpl implements AuthService {
             log.error("Error refreshing token", e);
             throw new BadCredentialsException("Refresh token inválido");
         }
+    }
+
+    @Override
+    public LoginResponseDTO createTokensForOAuth2User(UserEntity user) {
+        log.info("Creando tokens para usuarios OAuth2: {}", user.getEmail());
+
+        String accessToken = tokenService.generateAccessToken(user);
+        String refreshToken = tokenService.generateRefreshToken(user);
+
+        validRefreshTokens.add(refreshToken);
+        return LoginResponseDTO.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
+                .scope("read write")
+                .user(userMapper.toDTO(user))
+                .message("Login OAuth2 exitoso")
+                .build();
     }
 
     @Override
@@ -150,16 +173,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto) {
         if (userRepository.existsByEmail(registerRequestDto.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error al inicial sesion");
+            throw new AuthenticationException("Error al registrar usuario intente de nuevo");
         }
 
 
-        RoleEntity userRole = roleRepository.findByName("USER").orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al encontrar el rol de Usuario"));
+        RoleEntity userRole = roleRepository.findByName("USER").orElseThrow(() -> new RoleNotFoundException("Error al encontrar el rol USER"));
 
 
         UserEntity user = UserEntity.builder()
                 .email(registerRequestDto.email())
                 .password(passwordEncoder.encode(registerRequestDto.password()))
+                .provider(AuthProvider.LOCAL)
                 .roles(Set.of(userRole))
                 .enabled(true)
                 .build();
@@ -171,7 +195,8 @@ public class AuthServiceImpl implements AuthService {
                 registerRequestDto.firstName(),
                 registerRequestDto.lastName(),
                 registerRequestDto.dni(),
-                registerRequestDto.phone()
+                registerRequestDto.phone(),
+                null
         );
 
         log.info("Enviando evento {}", event);
@@ -179,52 +204,14 @@ public class AuthServiceImpl implements AuthService {
         log.info("Evento enviado {}", event);
 
         return LoginResponseDTO.builder()
-                .accessToken(generateAccessToken(user))
-                .refreshToken(generateRefreshToken(user))
+                .accessToken(tokenService.generateAccessToken(user))
+                .refreshToken(tokenService.generateRefreshToken(user))
                 .tokenType("Bearer")
                 .expiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
                 .scope("read write")
                 .user(userMapper.toDTO(user))
                 .message("Registro exitoso")
                 .build();
-    }
-
-
-    private String generateRefreshToken(UserEntity user) {
-        Instant now = Instant.now();
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("http://localhost:9091")
-                .issuedAt(now)
-                .expiresAt(now.plus(7, ChronoUnit.DAYS))
-                .subject(user.getEmail())
-                .claim("type", "refresh")
-                .claim("user_id", user.getId().toString())
-                .build();
-
-        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
-    }
-
-    private String generateAccessToken(UserEntity user) {
-        Instant now = Instant.now();
-
-        String authorities = user.getRoles().stream()
-                .map(role -> "ROLE_" + role.getName())
-                .collect(Collectors.joining(" "));
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("http://localhost:9091")
-                .issuedAt(now)
-                .expiresAt(now.plus(15, ChronoUnit.MINUTES))
-                .subject(user.getEmail())
-                .claim("scope", "read write")
-                .claim("authorities", authorities)
-                .claim("user_id", user.getId().toString())
-                .claim("username", user.getUsername())
-                .claim("email", user.getEmail())
-                .build();
-
-        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 
 
