@@ -5,6 +5,7 @@ public record CreatedUserEvent(
         String firstName,
         String lastName,
         String dni,
-        String phone
+        String phone,
+        String profileImageUrl
 ) {
 }

@@ -2,6 +2,7 @@ package com.security.entity;
 
 import com.security.config.audit.Audit;
 import com.security.config.audit.AuditListener;
+import com.security.enums.AuthProvider;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,13 +29,14 @@ public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-//    private String username;
+    @Column(unique = true)
     private String email;
     private String password;
-//    private String firstName;
-//    private String lastName;
-//    private String dni;
-//    private String phone;
+    @Column(unique = true)
+    private String googleId;
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private AuthProvider provider = AuthProvider.LOCAL;
 
     @Embedded
     private Audit audit;
@@ -54,7 +56,11 @@ public class UserEntity implements UserDetails {
     private Boolean credentialsNonExpired = true;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private Set<RoleEntity> roles;
 
     @Override

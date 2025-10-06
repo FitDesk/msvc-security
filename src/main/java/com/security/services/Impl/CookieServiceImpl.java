@@ -71,7 +71,8 @@ public class CookieServiceImpl implements CookieService {
             cookie.setDomain(cookieDomain);
         }
         response.addCookie(cookie);
-
+        log.debug("Cookie '{}' establecida con maxAge={}, secure={}, path={}, domain={}",
+                name, maxAge, cookieSecure, cookie.getPath(), cookie.getDomain());
         /**
          * SameSite previene ataques de CSRF -> Cross Site Request Forgery
          * 
