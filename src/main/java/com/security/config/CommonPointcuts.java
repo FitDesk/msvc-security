@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CommonPointcuts {
     @Pointcut("execution(* com.security.services.*.*(..))")
-    public void greetingLoggerServices(){};
+    public void greetingLoggerServices(){}
 
     @Pointcut("execution(* com.security.controllers.*.*(..))")
-    public void greetingLoggerControllers(){};
+    public void greetingLoggerControllers(){}
 }

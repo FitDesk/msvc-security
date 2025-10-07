@@ -15,6 +15,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.Collections;
@@ -172,6 +173,44 @@ public class GlobalExceptionController {
                         "message", "Error interno del servidor",
                         "timestamp", System.currentTimeMillis()
                 ));
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "USER_ERROR",
+                "Ha ocurrido un error con el usuario",
+                Collections.singletonList(ex.getMessage())
+        );
+
+        log.warn("User not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+
+    @ExceptionHandler(RoleNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRoleNotFoundException(RoleNotFoundException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "USER_ERROR",
+                "Ha ocurrido un error con el usuario",
+                Collections.singletonList(ex.getMessage())
+        );
+
+        log.warn("User not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "USER_ERROR",
+                "Error al registrar al usuario",
+                Collections.singletonList(ex.getMessage())
+        );
+
+        log.warn("User not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
 }
