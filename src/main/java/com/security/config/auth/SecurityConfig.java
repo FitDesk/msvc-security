@@ -100,8 +100,22 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2ResourceServer ->
                         oauth2ResourceServer.jwt(Customizer.withDefaults())
                 )
-                .csrf(csrf-> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/auth/register")
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .ignoringRequestMatchers(
+                                "/actuator/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/auth/info",
+                                "/auth/status",
+                                "/auth/login",
+                                "/auth/refresh",
+                                "/auth/register",
+                                "/oauth2/**",
+                                "/login/oauth2/**",
+                                "/test/saludo",
+                                "/test/notification",
+                                "/"
+                        )
                 )
                 .build();
     }
