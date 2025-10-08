@@ -30,7 +30,7 @@ jobs:
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.organization=$SONAR_ORG_KEY \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.pullrequest.key=$SONAR_PULL_REQUEST_KEY \
             -Dsonar.pullrequest.branch=$SONAR_PR_BRANCH \
             -Dsonar.pullrequest.base=$SONAR_PULL_REQUEST_BASE
