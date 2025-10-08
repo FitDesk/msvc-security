@@ -196,6 +196,7 @@ public class AuthServiceImpl implements AuthService {
                 registerRequestDto.lastName(),
                 registerRequestDto.dni(),
                 registerRequestDto.phone(),
+                registerRequestDto.email(),
                 null
         );
 

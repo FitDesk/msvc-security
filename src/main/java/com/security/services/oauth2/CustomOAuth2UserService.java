@@ -146,6 +146,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 userInfo.getLastName(),
                 null,
                 null,
+                userInfo.getEmail(),
                 userInfo.getProfileImageUrl()
         );
 
@@ -160,6 +161,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 userInfo.getLastName(),
                 null,
                 null,
+                userInfo.getEmail(),
                 userInfo.getProfileImageUrl()
         );
 
