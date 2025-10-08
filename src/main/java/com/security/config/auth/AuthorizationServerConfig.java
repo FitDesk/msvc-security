@@ -1,6 +1,7 @@
 package com.security.config.auth;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,11 +26,14 @@ public class AuthorizationServerConfig {
     private final AuthProperties authProperties;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${gateway.secret}")
+    private String GATEWAY_SECRET;
+
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
         RegisteredClient.Builder clientBuilder = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("gateway-client")
-                .clientSecret(passwordEncoder.encode("gateway-secret"))
+                .clientSecret(passwordEncoder.encode(GATEWAY_SECRET))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)

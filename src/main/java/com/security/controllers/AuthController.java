@@ -33,7 +33,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final CookieService cookieService;
-//    private final LoginResponseService loginResponseService;
+
 
     @Operation(summary = "Iniciar sesión con email", description = "Autentica un usuario y establece cookies seguras")
     @PostMapping("/login")
@@ -102,11 +102,12 @@ public class AuthController {
             cookieService.clearTokenCookies(response);
             return ResponseEntity.ok(new AuthResponseDTO(true, "Sesión cerrada exitosamente", Instant.now()));
 
-        } catch (
-                Exception e) {
+        } catch (Exception e) {
             log.error("Logout failed", e);
             cookieService.clearTokenCookies(response);
-            return ResponseEntity.ok(new AuthResponseDTO(false, "Error al cerrar sesion", Instant.now()));
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new AuthResponseDTO(false, "Error al cerrar sesión", Instant.now()));
         }
     }
 
