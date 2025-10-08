@@ -5,6 +5,7 @@ import com.security.dtos.auth.LoginRequestDTO;
 import com.security.dtos.auth.LoginResponseDTO;
 import com.security.dtos.auth.RegisterRequestDto;
 import com.security.annotations.AuthenticatedAccess;
+import com.security.entity.UserEntity;
 import com.security.services.AuthService;
 import com.security.services.CookieService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -102,7 +103,8 @@ public class AuthController {
             cookieService.clearTokenCookies(response);
             return ResponseEntity.ok(new AuthResponseDTO(true, "Sesión cerrada exitosamente", Instant.now()));
 
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             log.error("Logout failed", e);
             cookieService.clearTokenCookies(response);
             return ResponseEntity
@@ -131,16 +133,30 @@ public class AuthController {
         }
     }
 
+    // Java
     @Operation(summary = "Verificar autenticación")
     @AuthenticatedAccess
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> getCurrentUser(Authentication authentication) {
-        return ResponseEntity.ok(Map.of(
-                "authenticated", true,
-                "email", authentication.getName(),
-                "authorities", authentication.getAuthorities()
-        ));
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("authenticated", false, "error", "Usuario no autenticado"));
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.springframework.security.oauth2.jwt.Jwt jwt) {
+            String id = jwt.getClaimAsString("user_id");
+            String email = jwt.getClaimAsString("email");
+            return ResponseEntity.ok(Map.of(
+                    "authenticated", true,
+                    "id", id,
+                    "email", email,
+                    "authorities", authentication.getAuthorities()
+            ));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("authenticated", false, "error", "Usuario no autenticado"));
     }
+
 
     @Operation(summary = "Estado del servicio")
     @GetMapping("/status")
