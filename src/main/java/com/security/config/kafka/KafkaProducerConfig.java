@@ -48,8 +48,10 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeout);
         config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, idempotence);
         config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, inflightRequests);
-        config.put(JsonSerializer.TYPE_MAPPINGS, "NotificationEvent:com.security.events.notification.NotificationEvent,CreatedUserEvent:com.security.events.notification.CreatedUserEvent");
-        config.put(ProducerConfig.RETRIES_CONFIG, 10);
+        config.put(JsonSerializer.TYPE_MAPPINGS,
+                "NotificationEvent:com.security.events.notification.NotificationEvent," +
+                        "CreatedUserEvent:com.security.events.notification.CreatedUserEvent," +
+                        "PasswordChangedEvent:com.security.events.notification.PasswordChangedEvent");
         return config;
     }
 

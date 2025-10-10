@@ -1,5 +1,6 @@
 package com.security.services;
 
+import com.security.dtos.auth.ChangePasswordRequestDto;
 import com.security.dtos.auth.LoginRequestDTO;
 import com.security.dtos.auth.LoginResponseDTO;
 import com.security.dtos.auth.RegisterRequestDto;
@@ -12,5 +13,7 @@ public interface AuthService {
     LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto);
     LoginResponseDTO refreshToken(String refreshToken);
     LoginResponseDTO createTokensForOAuth2User(UserEntity user);
+    void changePassword(ChangePasswordRequestDto request, String userEmail);
+
 
 }

@@ -1,4 +1,6 @@
 package com.security.events.notification;
 
-public class PasswordChangedEvent {
-}
+public record PasswordChangedEvent(
+        String userId,
+        String email
+) {}

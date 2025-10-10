@@ -1,6 +1,7 @@
 package com.security.controllers;
 
 import com.security.dtos.auth.AuthResponseDTO;
+import com.security.dtos.auth.ChangePasswordRequestDto;
 import com.security.dtos.auth.LoginRequestDTO;
 import com.security.dtos.auth.LoginResponseDTO;
 import com.security.dtos.auth.RegisterRequestDto;
@@ -114,6 +115,7 @@ public class AuthController {
     }
 
 
+    @Operation(summary = "Registrar usuario", description = "Crea un nuevo usuario y establece cookies seguras")
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDto registerRequestDto, HttpServletResponse response) {
         try {
@@ -166,5 +168,23 @@ public class AuthController {
                 "service", "msvc-security",
                 "authentication_method", "cookie_based_secure"
         ));
+    }
+
+
+    @Operation(summary = "Cambiar contraseña", description = "Permite a un usuario autenticado cambiar su contraseña")
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @Valid @RequestBody ChangePasswordRequestDto request,
+            Authentication authentication) {
+        
+        log.info("Solicitud de cambio de contraseña para usuario: {}", authentication.getName());
+        
+        authService.changePassword(request, authentication.getName());
+        
+        Map<String, String> response = Map.of(
+            "message", "Contraseña cambiada exitosamente. Se ha enviado una confirmación a tu correo."
+        );
+        
+        return ResponseEntity.ok(response);
     }
 }
