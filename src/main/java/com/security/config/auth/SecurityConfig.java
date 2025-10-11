@@ -81,6 +81,9 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/test/saludo",
                                 "/test/notification",
+                                "/users/{id}",
+                                "/users/by-email/**",
+                                "/users/by-role/**",
                                 "/"
                         ).permitAll()
                         .anyRequest().authenticated()
@@ -114,6 +117,9 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/test/saludo",
                                 "/test/notification",
+                                "/users/{id}",
+                                "/users/by-email/**",
+                                "/users/by-role/**",
                                 "/"
                         )
                 )

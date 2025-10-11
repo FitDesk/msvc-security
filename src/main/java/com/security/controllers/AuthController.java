@@ -5,7 +5,6 @@ import com.security.dtos.auth.LoginRequestDTO;
 import com.security.dtos.auth.LoginResponseDTO;
 import com.security.dtos.auth.RegisterRequestDto;
 import com.security.annotations.AuthenticatedAccess;
-import com.security.entity.UserEntity;
 import com.security.services.AuthService;
 import com.security.services.CookieService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,7 +22,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.Map;
-
 
 @RestController
 @RequestMapping("/auth")
@@ -133,7 +131,6 @@ public class AuthController {
         }
     }
 
-    // Java
     @Operation(summary = "Verificar autenticación")
     @AuthenticatedAccess
     @GetMapping("/me")

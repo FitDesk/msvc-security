@@ -9,10 +9,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoleDTO {
-
     private UUID id;
-
     private String name;
-
     private String description;
 }
