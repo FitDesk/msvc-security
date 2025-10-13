@@ -1,6 +1,7 @@
 package com.security.controllers;
 
 import com.security.dtos.autorization.UserDTO;
+import com.security.dtos.chat.SimpleUserDto;
 import com.security.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +36,7 @@ public class UserPublicController {
 
     @Operation(summary = "Obtener usuarios por rol")
     @GetMapping("/by-role/{role}")
-    public List<UserDTO> getUsersByRole(@PathVariable String role) {
+    public List<SimpleUserDto> getUsersByRole(@PathVariable String role) {
         return userService.getUsersByRole(role);
     }
 }

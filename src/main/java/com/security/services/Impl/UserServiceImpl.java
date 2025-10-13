@@ -1,6 +1,7 @@
 package com.security.services.Impl;
 
 import com.security.dtos.autorization.UserDTO;
+import com.security.dtos.chat.SimpleUserDto;
 import com.security.entity.UserEntity;
 import com.security.mappers.UserMapper;
 import com.security.repository.UserRepository;
@@ -43,9 +44,9 @@ public class UserServiceImpl implements UserService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<UserDTO> getUsersByRole(String roleName) {
-        log.info("🔍 Buscando usuarios con rol: {}", roleName);
-        
+    public List<SimpleUserDto> getUsersByRole(String roleName) {
+        log.info("Buscando usuarios con rol: {}", roleName);
+
         List<UserEntity> users = userRepository.findAll().stream()
                 .filter(user -> user.getRoles().stream()
                         .anyMatch(role -> role.getName().equalsIgnoreCase(roleName)))
@@ -53,9 +54,8 @@ public class UserServiceImpl implements UserService {
 
         log.info("✅ Se encontraron {} usuarios con rol {}", users.size(), roleName);
         log.info(users.toString());
-        
+
         return users.stream()
-                .map(userMapper::toDTO)
-                .collect(Collectors.toList());
+                .map(userMapper::toSimpleDto).toList();
     }
 }
