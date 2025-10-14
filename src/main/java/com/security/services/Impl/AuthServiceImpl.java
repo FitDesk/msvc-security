@@ -15,6 +15,9 @@ import com.security.repository.RoleRepository;
 import com.security.repository.UserRepository;
 import com.security.services.AuthService;
 import com.security.services.TokenService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -40,7 +43,6 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
-    private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final TokenService tokenService;
@@ -50,6 +52,9 @@ public class AuthServiceImpl implements AuthService {
     private final Set<String> blacklistedTokens = ConcurrentHashMap.newKeySet();
 
     @Override
+    @CircuitBreaker(name = "authServiceCircuitBreaker", fallbackMethod = "authenticateUserFallback")
+    @Retry(name = "databaseRetry")
+    @TimeLimiter(name = "databaseTimeLimiter")
     public LoginResponseDTO authenticateUser(LoginRequestDTO request) {
         log.info("Authenticating user: {}", request.getEmail());
 
@@ -80,7 +85,14 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    private LoginResponseDTO authenticateUserFallback(LoginResponseDTO request, Throwable throwable) {
+        log.error("Fallback activado para  authenticateUser - Error {}", throwable.getMessage());
+        throw new AuthenticationException("Servicio de autenticación no disponible.Intente de nuevo más tarde.");
+    }
+
     @Override
+    @CircuitBreaker(name = "authServiceCircuitBreaker", fallbackMethod = "refreshTokenFallback")
+    @Retry(name = "databaseRetry")
     public LoginResponseDTO refreshToken(String refreshToken) {
         log.info("Refreshing token");
 
@@ -121,6 +133,11 @@ public class AuthServiceImpl implements AuthService {
             log.error("Error refreshing token", e);
             throw new BadCredentialsException("Refresh token inválido");
         }
+    }
+
+    private LoginResponseDTO refreshTokenFallback(String refreshToken, Throwable throwable) {
+        log.error("Fallback activado para refreshToken - Error: {}", throwable.getMessage());
+        throw new AuthenticationException("Servicio de renovación de tokens no disponible");
     }
 
     @Override
@@ -171,6 +188,9 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
+    @CircuitBreaker(name = "authServiceCircuitBreaker", fallbackMethod = "registerUserFallback")
+    @Retry(name = "databaseRetry")
+    @TimeLimiter(name = "databaseTimeLimiter")
     public LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto) {
         if (userRepository.existsByEmail(registerRequestDto.email())) {
             throw new AuthenticationException("Error al registrar usuario intente de nuevo");
@@ -190,19 +210,7 @@ public class AuthServiceImpl implements AuthService {
 
         userRepository.save(user);
 
-        CreatedUserEvent event = new CreatedUserEvent(
-                user.getId().toString(),
-                registerRequestDto.firstName(),
-                registerRequestDto.lastName(),
-                registerRequestDto.dni(),
-                registerRequestDto.phone(),
-                registerRequestDto.email(),
-                null
-        );
-
-        log.info("Enviando evento {}", event);
-        kafkaTemplate.send("user-created-event-topic", event);
-        log.info("Evento enviado {}", event);
+        sendUserCreatedEvent(user, registerRequestDto);
 
         return LoginResponseDTO.builder()
                 .accessToken(tokenService.generateAccessToken(user))
@@ -215,5 +223,34 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    private LoginResponseDTO registerUserFallback(RegisterRequestDto registerRequestDto, Throwable throwable) {
+        log.error("Fallback activado para registerUser- Error {}", throwable.getMessage());
+        throw new AuthenticationException("Servicio de registro temporalmente no disponible");
+    }
 
+
+    @CircuitBreaker(name = "kafkaCircuitBreaker", fallbackMethod = "sendUserCreatedEventFallback")
+    @Retry(name = "kafkaRetry")
+    @TimeLimiter(name = "kafkaTimeLimiter")
+    private void sendUserCreatedEvent(UserEntity user, RegisterRequestDto registerRequestDto) {
+        CreatedUserEvent event = new CreatedUserEvent(
+                user.getId().toString(),
+                registerRequestDto.firstName(),
+                registerRequestDto.lastName(),
+                registerRequestDto.dni(),
+                registerRequestDto.phone(),
+                registerRequestDto.email(),
+                null
+        );
+
+        log.info("Enviando evento de usuario creado: {}", event);
+        kafkaTemplate.send("user-created-event-topic", event);
+        log.info("Evento enviado correctamente");
+    }
+
+    private void sendUserCreatedEventFallback(UserEntity user, RegisterRequestDto registerRequestDto, Throwable throwable) {
+        log.error("Fallback de Kafka - No se pudo enviar evento de usuario creado. Error: {}", throwable.getMessage());
+        // En producción: guardar en cola de reintentos o base de datos temporal
+        log.warn("Evento no enviado será reintentado posteriormente para usuario: {}", user.getEmail());
+    }
 }
