@@ -31,7 +31,6 @@ public class UserServiceImpl implements UserService {
 
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getUserByIdFallback")
     @Retry(name = "databaseRetry")
-    @TimeLimiter(name = "databaseTimeLimiter")
     @Transactional(readOnly = true)
     @Override
     public UserDTO getUserById(UUID id) {
@@ -47,7 +46,6 @@ public class UserServiceImpl implements UserService {
 
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getUserByEmailFallback")
     @Retry(name = "databaseRetry")
-    @TimeLimiter(name = "databaseTimeLimiter")
     @Transactional(readOnly = true)
     @Override
     public UserDTO getUserByEmail(String email) {
@@ -64,7 +62,6 @@ public class UserServiceImpl implements UserService {
 
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getUsersByRoleFallback")
     @Retry(name = "databaseRetry")
-    @TimeLimiter(name = "databaseTimeLimiter")
     @Transactional(readOnly = true)
     @Override
     public List<SimpleUserDto> getUsersByRole(String roleName) {

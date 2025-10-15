@@ -11,9 +11,9 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
 
     @Mapping(target = "roles", source = "roles")
+    @Mapping(target = "provider", expression = "java(userEntity.getProvider() != null ? userEntity.getProvider().name() : null)")
     UserDTO toDTO(UserEntity userEntity);
 
-//    @Mapping(target = "roles", source = "roles")
     SimpleUserDto toSimpleDto(UserEntity user);
 
     @Mapping(target = "password", ignore = true)

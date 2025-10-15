@@ -54,7 +54,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @CircuitBreaker(name = "authServiceCircuitBreaker", fallbackMethod = "authenticateUserFallback")
     @Retry(name = "databaseRetry")
-    @TimeLimiter(name = "databaseTimeLimiter")
     public LoginResponseDTO authenticateUser(LoginRequestDTO request) {
         log.info("Authenticating user: {}", request.getEmail());
 
@@ -190,7 +189,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @CircuitBreaker(name = "authServiceCircuitBreaker", fallbackMethod = "registerUserFallback")
     @Retry(name = "databaseRetry")
-    @TimeLimiter(name = "databaseTimeLimiter")
     public LoginResponseDTO registerUser(RegisterRequestDto registerRequestDto) {
         if (userRepository.existsByEmail(registerRequestDto.email())) {
             throw new AuthenticationException("Error al registrar usuario intente de nuevo");
@@ -231,7 +229,6 @@ public class AuthServiceImpl implements AuthService {
 
     @CircuitBreaker(name = "kafkaCircuitBreaker", fallbackMethod = "sendUserCreatedEventFallback")
     @Retry(name = "kafkaRetry")
-    @TimeLimiter(name = "kafkaTimeLimiter")
     private void sendUserCreatedEvent(UserEntity user, RegisterRequestDto registerRequestDto) {
         CreatedUserEvent event = new CreatedUserEvent(
                 user.getId().toString(),
@@ -250,7 +247,6 @@ public class AuthServiceImpl implements AuthService {
 
     private void sendUserCreatedEventFallback(UserEntity user, RegisterRequestDto registerRequestDto, Throwable throwable) {
         log.error("Fallback de Kafka - No se pudo enviar evento de usuario creado. Error: {}", throwable.getMessage());
-        // En producción: guardar en cola de reintentos o base de datos temporal
         log.warn("Evento no enviado será reintentado posteriormente para usuario: {}", user.getEmail());
     }
 }
