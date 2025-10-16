@@ -2,6 +2,7 @@ package com.security.services.Impl;
 
 import com.security.dtos.auth.AuthResponseDTO;
 import com.security.entity.UserEntity;
+import com.security.enums.AuthProvider;
 import com.security.repository.UserRepository;
 import com.security.config.audit.Audit;
 import com.security.services.UserAccountService;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -45,6 +47,24 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         return new AuthResponseDTO(true, "Usuario desactivado", Instant.now());
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUserStatistics() {
+        long totalUsers = userRepository.count();
+        long googleUsers = userRepository.findAll().stream()
+                .filter(user -> user.getProvider() == AuthProvider.GOOGLE)
+                .count();
+        long localUsers = userRepository.findAll().stream()
+                .filter(user -> user.getProvider() == AuthProvider.LOCAL)
+                .count();
+
+        return Map.of(
+                "totalUsers", totalUsers,
+                "googleUsers", googleUsers,
+                "localUsers", localUsers
+        );
     }
 
 
