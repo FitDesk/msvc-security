@@ -2,6 +2,8 @@ package com.security.services.Impl;
 
 import com.security.dtos.auth.AuthResponseDTO;
 import com.security.dtos.autorization.RolesResponseDTO;
+import com.security.dtos.roles.RoleDetailsDto;
+import com.security.dtos.roles.RoleStatisticsDto;
 import com.security.entity.RoleEntity;
 import com.security.entity.UserEntity;
 import com.security.repository.RoleRepository;
@@ -15,9 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,5 +69,28 @@ public class UserRoleServiceImpl implements UserRoleService {
         user.setRoles(mutable);
         userRepository.save(user);
         return new AuthResponseDTO(true, "Rol removido", Instant.now());
+    }
+
+    @Override
+    public RoleStatisticsDto getUserStatistics() {
+        List<UserEntity> users = userRepository.findAll();
+
+        long totalUsers = users.size();
+        long activeUsers = users.stream().filter(UserEntity::isEnabled).count();
+        long inactiveUsers = users.stream().filter(user -> !user.isEnabled()).count();
+        long suspendedUsers = users.stream().filter(user -> !user.isAccountNonLocked()).count();
+
+        Map<String, Long> roleCounts = users.stream()
+                .flatMap(user -> user.getRoles().stream())
+                .collect(Collectors.groupingBy(role -> role.getName().toUpperCase(), Collectors.counting()));
+
+        return new RoleStatisticsDto(totalUsers, activeUsers, inactiveUsers, suspendedUsers, roleCounts);
+    }
+
+    @Override
+    public List<RoleDetailsDto> getRoleDetails() {
+        return roleRepository.findAll().stream()
+                .map(role -> new RoleDetailsDto(role.getName(), role.getDescription()))
+                .collect(Collectors.toList());
     }
 }
