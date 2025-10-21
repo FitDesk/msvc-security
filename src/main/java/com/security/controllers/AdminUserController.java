@@ -6,12 +6,17 @@ import com.security.dtos.autorization.RolesResponseDTO;
 import com.security.annotations.AdminAccess;
 import com.security.dtos.roles.RoleDetailsDto;
 import com.security.dtos.roles.RoleStatisticsDto;
+import com.security.dtos.trainer.TrainerRegistrationRequest;
+import com.security.dtos.trainer.TrainerRegistrationResponse;
+import com.security.services.TrainerService;
 import com.security.services.UserAccountService;
 import com.security.services.UserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +28,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Autorizacion", description = "Endpoints para manejo de roles")
 public class AdminUserController {
 
     private final UserRoleService userRoleService;
     private final UserAccountService userAccountService;
+    private final TrainerService trainerService;
 
     @Operation(summary = "Listar roles de usuario")
     @GetMapping("/{id}/roles")
@@ -92,6 +99,14 @@ public class AdminUserController {
     @AdminAccess
     public ResponseEntity<Map<String, Object>> getUserProviderStatistics() {
         return ResponseEntity.ok(userAccountService.getUserStatistics());
+    }
+
+    @PostMapping("/register-trainer")
+    @AdminAccess
+    public ResponseEntity<TrainerRegistrationResponse> registerTrainer(
+            @Valid @RequestBody TrainerRegistrationRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(trainerService.registerTrainer(request));
     }
 
 }

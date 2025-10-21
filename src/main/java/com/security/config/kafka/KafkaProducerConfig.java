@@ -48,7 +48,11 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeout);
         config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, idempotence);
         config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, inflightRequests);
-        config.put(JsonSerializer.TYPE_MAPPINGS, "NotificationEvent:com.security.events.notification.NotificationEvent,CreatedUserEvent:com.security.events.notification.CreatedUserEvent");
+        config.put(JsonSerializer.TYPE_MAPPINGS,
+                "NotificationEvent:com.security.events.notification.NotificationEvent," +
+                "CreatedUserEvent:com.security.events.notification.CreatedUserEvent," +
+                "TrainerCreatedEvent:com.security.events.classes.TrainerCreatedEvent"
+        );
         config.put(ProducerConfig.RETRIES_CONFIG, 10);
         return config;
     }
@@ -67,6 +71,15 @@ public class KafkaProducerConfig {
     NewTopic createNotificationTopic() {
         return TopicBuilder
                 .name("user-created-event-topic")
+                .partitions(1)
+                .replicas(1)
+                .configs(Map.of("min.insync.replicas", "1"))
+                .build();
+    }
+    @Bean
+    NewTopic createNotificationTrainerTopic() {
+        return TopicBuilder
+                .name("trainer-created-event-topic")
                 .partitions(1)
                 .replicas(1)
                 .configs(Map.of("min.insync.replicas", "1"))
