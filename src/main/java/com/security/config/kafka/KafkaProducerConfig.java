@@ -51,8 +51,9 @@ public class KafkaProducerConfig {
         config.put(JsonSerializer.TYPE_MAPPINGS,
                 "NotificationEvent:com.security.events.notification.NotificationEvent," +
                 "CreatedUserEvent:com.security.events.notification.CreatedUserEvent," +
-                "TrainerCreatedEvent:com.security.events.classes.TrainerCreatedEvent"
-        );
+                "TrainerCreatedEvent:com.security.events.classes.TrainerCreatedEvent," +
+                "PasswordChangedEvent:com.security.events.notification.PasswordChangedEvent"
+                );
         config.put(ProducerConfig.RETRIES_CONFIG, 10);
         return config;
     }
@@ -85,5 +86,12 @@ public class KafkaProducerConfig {
                 .configs(Map.of("min.insync.replicas", "1"))
                 .build();
     }
-
+ @Bean
+    NewTopic passwordChangedTopic() {
+        return TopicBuilder
+                .name("password-changed-event-topic")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
 }

@@ -1,9 +1,6 @@
 package com.security.controllers;
 
-import com.security.dtos.auth.AuthResponseDTO;
-import com.security.dtos.auth.LoginRequestDTO;
-import com.security.dtos.auth.LoginResponseDTO;
-import com.security.dtos.auth.RegisterRequestDto;
+import com.security.dtos.auth.*;
 import com.security.annotations.AuthenticatedAccess;
 import com.security.services.AuthService;
 import com.security.services.CookieService;
@@ -163,5 +160,21 @@ public class AuthController {
                 "service", "msvc-security",
                 "authentication_method", "cookie_based_secure"
         ));
+    }
+    @Operation(summary = "Cambiar contraseña", description = "Permite a un usuario autenticado cambiar su contraseña")
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @Valid @RequestBody ChangePasswordRequestDto request,
+            Authentication authentication) {
+
+        log.info("Solicitud de cambio de contraseña para usuario: {}", authentication.getName());
+
+        authService.changePassword(request, authentication.getName());
+
+        Map<String, String> response = Map.of(
+                "message", "Contraseña cambiada exitosamente. Se ha enviado una confirmación a tu correo."
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,4 +1,4 @@
-package com.security.dtos.auth;
+package com.security.events.notification;
 
 public record PasswordChangedEvent(
         String userId,

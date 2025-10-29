@@ -1,12 +1,12 @@
 package com.security.services.Impl;
 
-import com.security.dtos.auth.LoginRequestDTO;
-import com.security.dtos.auth.LoginResponseDTO;
-import com.security.dtos.auth.RegisterRequestDto;
+import com.security.dtos.auth.*;
+import com.security.dtos.autorization.UserDTO;
 import com.security.entity.RoleEntity;
 import com.security.entity.UserEntity;
 import com.security.enums.AuthProvider;
 import com.security.events.notification.CreatedUserEvent;
+import com.security.events.notification.PasswordChangedEvent;
 import com.security.exceptions.AuthenticationException;
 import com.security.exceptions.RoleNotFoundException;
 import com.security.exceptions.UserNotFoundException;
@@ -17,7 +17,6 @@ import com.security.services.AuthService;
 import com.security.services.TokenService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -248,5 +247,35 @@ public class AuthServiceImpl implements AuthService {
     private void sendUserCreatedEventFallback(UserEntity user, RegisterRequestDto registerRequestDto, Throwable throwable) {
         log.error("Fallback de Kafka - No se pudo enviar evento de usuario creado. Error: {}", throwable.getMessage());
         log.warn("Evento no enviado será reintentado posteriormente para usuario: {}", user.getEmail());
+    }
+    public void changePassword(ChangePasswordRequestDto request, String userEmail) {
+        log.info("Iniciando cambio de contraseña para usuario: {}", userEmail);
+
+        UserEntity user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            log.warn("Intento de cambio de contraseña con contraseña incorrecta para: {}", userEmail);
+            throw new BadCredentialsException("La contraseña actual es incorrecta");
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
+            throw new BadCredentialsException("La nueva contraseña debe ser diferente a la actual");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        log.info("Contraseña actualizada exitosamente para usuario: {}", userEmail);
+
+        UserDTO userDTO = userMapper.toDTO(user);
+
+        PasswordChangedEvent event = new PasswordChangedEvent(
+                user.getId().toString(),
+                user.getEmail()
+        );
+
+        kafkaTemplate.send("password-changed-event-topic", event);
+        log.info("Evento de cambio de contraseña enviado para usuario: {}", userEmail);
     }
 }
