@@ -30,6 +30,5 @@ public class TrainerRegistrationRequest {
     private String dni;
 
     @NotBlank(message = "El teléfono es obligatorio")
-//    @Pattern(regexp = "^[+]?[0-9]{9,15}$", message = "Teléfono inválido")
     private String phone;
 }

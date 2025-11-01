@@ -22,21 +22,19 @@ public class NotificationServiceImpl {
             log.info("Enviando notificación: {}", message);
             NotificationEvent event = new NotificationEvent(message);
 
-            // Envío asíncrono con callback
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send("user-created-event-topic", event);
+            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send("user-created-event-topic",
+                    event);
 
             future.whenComplete((result, exception) -> {
                 if (exception == null) {
-                    log.info("✅ Notificación enviada exitosamente: offset={}",
+                    log.info(" Notificación enviada exitosamente: offset={}",
                             result.getRecordMetadata().offset());
                 } else {
-                    log.error("❌ Error enviando notificación", exception);
+                    log.error(" Error enviando notificación", exception);
                 }
             });
 
         } catch (Exception e) {
-            log.error("❌ Error en sendNotification", e);
             throw e;
         }
     }

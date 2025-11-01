@@ -36,14 +36,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         if (principal instanceof CustomOidcUser customOidcUser) {
             user = customOidcUser.getUser();
-            log.info("✅ Usuario obtenido desde CustomOidcUser: {}", user.getEmail());
+            log.info("Usuario obtenido desde CustomOidcUser: {}", user.getEmail());
         } else if (principal instanceof CustomOAuth2User customOAuth2User) {
             user = customOAuth2User.getUser();
-            log.info("✅ Usuario obtenido desde CustomOAuth2User: {}", user.getEmail());
+            log.info("Usuario obtenido desde CustomOAuth2User: {}", user.getEmail());
         } else {
-            log.error("❌ Principal NO es CustomOAuth2User ni CustomOidcUser. Tipo: {}", principal.getClass().getName());
+            log.error(" Principal NO es CustomOAuth2User ni CustomOidcUser. Tipo: {}", principal.getClass().getName());
             if (principal instanceof OAuth2User oauth2User) {
-                log.error("❌ Atributos: {}", oauth2User.getAttributes());
+                log.error(" Atributos: {}", oauth2User.getAttributes());
             }
 
             getRedirectStrategy().sendRedirect(request, response,
@@ -62,9 +62,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             var loginResponse = authService.createTokensForOAuth2User(user);
             cookieService.setSecureTokenCookies(response, loginResponse);
 
-            log.info("✅ Cookies establecidas para usuario OAuth2: {}", user.getEmail());
+            log.info(" Cookies establecidas para usuario OAuth2: {}", user.getEmail());
 
-            // ✅ Redirigir al frontend
             String targetUrl = UriComponentsBuilder
                     .fromUriString("http://localhost:5173/auth/callback")
                     .queryParam("success", "true")
@@ -79,9 +78,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             clearAuthenticationAttributes(request);
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
 
-        } catch (
-                Exception e) {
-            log.error("❌ Error generando tokens para OAuth2", e);
+        } catch (Exception e) {
             getRedirectStrategy().sendRedirect(request, response,
                     "http://localhost:5173/auth?error=token_generation_failed");
         }

@@ -35,36 +35,35 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         try {
             OAuth2User result = processOAuth2User(userRequest, oAuth2User);
-            log.info("✅ CustomOAuth2UserService retornó: {}", result.getClass().getName());
+            log.info("CustomOAuth2UserService retornó: {}", result.getClass().getName());
             return result;
         } catch (Exception ex) {
-            log.error("❌ Error procesando usuario OAuth2", ex);
+            log.error(" Error procesando usuario OAuth2", ex);
             throw new OAuth2AuthenticationException("Error procesando usuario OAuth2: " + ex.getMessage());
         }
     }
 
     private OAuth2User processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oAuth2User) {
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        log.info("🔄 Procesando OAuth2 user desde: {}", registrationId);
+        log.info("Procesando OAuth2 user desde: {}", registrationId);
 
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(
                 registrationId,
-                oAuth2User.getAttributes()
-        );
+                oAuth2User.getAttributes());
 
         if (userInfo.getEmail() == null || userInfo.getEmail().isEmpty()) {
             throw new OAuth2AuthenticationException("Email no encontrado en la respuesta de OAuth2");
         }
 
-        log.info("📧 Email extraído: {}", userInfo.getEmail());
+        log.info(" Email extraído: {}", userInfo.getEmail());
 
         UserEntity user = userRepository.findByEmail(userInfo.getEmail())
                 .map(existingUser -> {
-                    log.info("✅ Usuario existente encontrado: {}", existingUser.getEmail());
+                    log.info(" Usuario existente encontrado: {}", existingUser.getEmail());
                     return updateExistingUser(existingUser, userInfo);
                 })
                 .orElseGet(() -> {
-                    log.info("➕ Registrando nuevo usuario: {}", userInfo.getEmail());
+                    log.info(" Registrando nuevo usuario: {}", userInfo.getEmail());
                     return registerNewUser(userInfo, registrationId);
                 });
 
@@ -78,18 +77,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         log.info("✅ Usuario procesado correctamente: ID={}, Email={}", user.getId(), user.getEmail());
 
-
         CustomOAuth2User customUser = new CustomOAuth2User(user, oAuth2User.getAttributes());
-        log.info("✅ Retornando CustomOAuth2User para: {}", user.getEmail());
+        log.info(" Retornando CustomOAuth2User para: {}", user.getEmail());
         return customUser;
     }
 
     private UserEntity registerNewUser(OAuth2UserInfo userInfo, String provider) {
-        log.info("📝 Registrando nuevo usuario OAuth2: {}", userInfo.getEmail());
+        log.info(" Registrando nuevo usuario OAuth2: {}", userInfo.getEmail());
 
         RoleEntity userRole = roleRepository.findByName("USER")
                 .orElseThrow(() -> {
-                    log.error("❌ Rol USER no encontrado");
+                    log.error("Rol USER no encontrado");
                     return new OAuth2AuthenticationException("Rol USER no encontrado");
                 });
 
@@ -107,14 +105,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         try {
             publishUserCreatedEvent(savedUser, userInfo);
         } catch (Exception e) {
-            log.error("⚠️ Error publicando evento de usuario creado (no crítico)", e);
+            log.error(" Error publicando evento de usuario creado (no crítico)", e);
         }
 
         return savedUser;
     }
 
     private UserEntity updateExistingUser(UserEntity existingUser, OAuth2UserInfo userInfo) {
-        log.info("🔄 Actualizando usuario existente: {}", existingUser.getEmail());
+        log.info(" Actualizando usuario existente: {}", existingUser.getEmail());
 
         boolean updated = false;
 
@@ -125,7 +123,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         if (updated) {
             UserEntity savedUser = userRepository.save(existingUser);
-            log.info("✅ Usuario actualizado: ID={}, Email={}", savedUser.getId(), savedUser.getEmail());
+            log.info("Usuario actualizado: ID={}, Email={}", savedUser.getId(), savedUser.getEmail());
 
             try {
                 publishUserUpdateEvent(savedUser, userInfo);
@@ -147,10 +145,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 null,
                 null,
                 userInfo.getEmail(),
-                userInfo.getProfileImageUrl()
-        );
+                userInfo.getProfileImageUrl());
 
-        log.info("📤 Publicando evento de usuario creado: {}", event);
+        log.info(" Publicando evento de usuario creado: {}", event);
         kafkaTemplate.send("user-created-event-topic", event);
     }
 
@@ -162,10 +159,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 null,
                 null,
                 userInfo.getEmail(),
-                userInfo.getProfileImageUrl()
-        );
+                userInfo.getProfileImageUrl());
 
-        log.info("📤 Publicando evento de usuario actualizado: {}", event);
         kafkaTemplate.send("user-updated-event-topic", event);
     }
 }
